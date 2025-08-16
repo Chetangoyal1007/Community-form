@@ -118,6 +118,29 @@
   box-shadow: 0 6px 20px rgba(0, 240, 255, 0.6);
   transform: translateY(-2px);
 }
+.modal__buttons .cancel {
+  background: linear-gradient(90deg, #00e0ff, #0070ff);
+ /* base white */
+  color: #333; /* dark text */
+  border: none;
+  border-radius: 25px; /* fully rounded like Add button */
+  padding: 12px 30px; /* wider padding for better shape */
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  display: inline-block; /* keeps it inline with other buttons */
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+
+.modal__buttons .cancel:hover {
+  background: #cc3535;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
 
 
 .qHeader__Rem > .MuiButton-root {
