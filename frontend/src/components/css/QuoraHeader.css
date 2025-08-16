@@ -1,95 +1,99 @@
+/* ================= Header ================= */
 .qHeader {
   display: flex;
   align-items: center;
-  background-color: #fff;
-  position: sticky;
-  z-index: 1000;
-  top: 0px;
-  /* box-shadow: 0px 5px 8px -9px rgba(0, 0, 0, 0.5); */
-  box-shadow: 2px 3px 6px rgba(187, 187, 187, 0.5);
   justify-content: center;
-  padding: 3px;
+  background: linear-gradient(145deg, #1e1e2f, #2c2c44);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 5px 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .qHeader-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* padding: 5px; */
+  width: 100%;
+  max-width: 1400px;
 }
 
 .qHeader__logo > img {
-  height: 30px !important;
+  height: 35px !important;
   object-fit: contain;
+  filter: drop-shadow(0 0 2px #0ff);
 }
 
 .qHeader__icons {
   display: flex;
+  align-items: center;
 }
 
 .qHeader__icon {
-  padding: 5px;
+  padding: 8px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
 }
 
 .qHeader__icon:hover {
-  background-color: #eee;
-  border-radius: 5px;
+  background: rgba(0, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .qHeader__icon > .MuiSvgIcon-root {
-  color: gray;
-  font-size: xx-large;
-  margin-left: 20px;
-  margin-right: 20px;
+  color: #bbb;
+  font-size: 28px;
+  margin: 0 15px;
+  transition: color 0.3s ease;
 }
 
 .qHeader__icon:hover > .MuiSvgIcon-root {
-  color: #000;
+  color: #0ff;
 }
-
-/* .qHeader__icons {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-.qHeader__icons > .active > .MuiSvgIcon-root {
-  color: #8f1f1b;
-}
-.qHeader__icon > .MuiSvgIcon-root {
-  font-size: xx-large;
-  padding: 5px 20px;
-  color: gray;
-}
-.qHeader__icon > .MuiSvgIcon-root:hover {
-  background-color: rgba(233, 233, 233, 0.5);
-  border-radius: 10px;
-  color: #b92b27;
-} */
 
 .qHeader__input {
   display: flex;
   align-items: center;
-  border: 1px solid lightgray;
-  padding: 5px;
-  border-radius: 5px;
-  margin-left: 5px;
+  border-radius: 25px;
+  padding: 5px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.qHeader__input:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #0ff;
 }
 
 .qHeader__input > input {
   background-color: transparent;
-  outline: none;
   border: none;
-  color: rgb(49, 49, 49);
+  outline: none;
+  color: #eee;
+  width: 200px;
 }
 
 .qHeader__input > .MuiSvgIcon-root {
-  color: gray;
+  color: #0ff;
 }
 
 .qHeader__avatar {
   cursor: pointer;
+  border: 2px solid #0ff;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
 }
+
+.qHeader__avatar:hover {
+  transform: scale(1.1);
+}
+
 .qHeader__Rem {
   display: flex;
   align-items: center;
@@ -97,69 +101,86 @@
   cursor: pointer;
 }
 
-.qHeader__Rem > .MuiSvgIcon-root {
-  font-size: xx-large;
-  color: gray;
-  margin-left: 25px;
-  cursor: pointer;
-}
-.qHeader__Rem > .MuiSvgIcon-root:hover {
-  color: #000;
-}
-
 .qHeader__Rem > .MuiButton-root {
-  color: white;
-  background: #222;
-  text-transform: inherit;
-  border-radius: 5px;
-  margin-left: 25px;
+  color: #fff;
+  background: linear-gradient(135deg, #00f0ff, #0050ff);
+  text-transform: none;
+  border-radius: 25px;
+  padding: 8px 22px;
+  font-weight: 600;
+  margin-left: 15px;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+  transition: all 0.3s ease;
 }
 
 .qHeader__Rem > .MuiButton-root:hover {
-  color: #222;
-  background: rgb(214, 214, 214);
+  background: linear-gradient(135deg, #00e0ff, #0070ff);
+  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.6);
+  transform: translateY(-2px);
 }
 
+
+.qHeader__Rem > .MuiButton-root {
+  color: #fff;
+  background: linear-gradient(90deg, #0ff, #00f);
+  text-transform: inherit;
+  border-radius: 25px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.qHeader__Rem > .MuiButton-root:hover {
+  background: linear-gradient(90deg, #0ff, #0aa);
+  color: #fff;
+}
+
+/* ================= Modal ================= */
 .modal__title {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
-  border-bottom: 1px solid rgba(187, 187, 187, 0.5);
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modal__title > h5 {
-  color: gray;
+  color: #bbb;
   font-size: 20px;
-  cursor: pointer;
   font-weight: 500;
   margin-right: 30px;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 .modal__title > h5:hover {
-  color: #b92b27;
+  color: #0ff;
 }
 
 .modal__info {
   display: flex;
   align-items: center;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .modal__info > p {
   margin-left: 10px;
-  font-size: small;
-  color: gray;
+  font-size: 14px;
+  color: #aaa;
 }
 
 .modal__info > .modal__scope {
   display: flex;
   align-items: center;
-  color: rgb(98, 98, 98);
-  padding: 5px;
+  color: #fff;
+  padding: 5px 15px;
   margin-left: 10px;
-  background-color: rgb(230, 230, 230);
+  background: linear-gradient(90deg, #0ff, #00f);
   border-radius: 33px;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal__scope:hover {
+  background: linear-gradient(90deg, #0ff, #0aa);
 }
 
 .modal__Field {
@@ -170,7 +191,7 @@
 }
 
 .modal__Field > .modal__fieldLink {
-  color: gray;
+  color: #bbb;
   display: flex;
   margin-top: 10px;
   align-items: center;
@@ -181,24 +202,34 @@
   border: none;
   outline: none;
   margin-left: 5px;
+  padding: 8px 12px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #eee;
+  transition: all 0.3s ease;
+}
+
+.modal__Field > .modal__fieldLink > input:focus {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #0ff;
 }
 
 .modal__buttons {
   display: flex;
   flex-direction: column-reverse;
-  margin-top: 10px;
+  margin-top: 20px;
   align-items: center;
 }
 
 .modal__buttons > .cancle {
-  margin-top: 10px;
   border: none;
   outline: none;
-  color: gray;
+  color: #b72727;
   font-weight: 500;
-  padding: 10px;
-  border-radius: 33px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .modal__buttons > .cancle:hover {
@@ -209,20 +240,22 @@
   border: none;
   outline: none;
   margin-top: 10px;
-  background-color: #222;
-  color: white;
+  background: linear-gradient(90deg, #0ff, rgb(135, 135, 194));
+  color: #fff;
   font-weight: 700;
-  padding: 10px;
-  border-radius: 33px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
   width: 50%;
+  transition: all 0.3s ease;
 }
 
 .modal__buttons > .add:hover {
-  background-color: #eee;
-  color: #222;
+  background: linear-gradient(90deg, #0ff, #0aa);
+  color: #fff;
 }
 
+/* ================= Media Queries ================= */
 @media only screen and (max-width: 600px) {
   .qHeader__icons {
     display: none;
@@ -230,5 +263,9 @@
 
   .qHeader__input {
     display: none;
+  }
+
+  .qHeader__Rem > .MuiButton-root {
+    padding: 5px 12px;
   }
 }
