@@ -112,7 +112,7 @@ function QuoraHeader() {
             <Avatar src={user?.photo} alt={user?.displayName || "User"} />
           </span>
 
-          <Button onClick={() => setIsModalOpen(true)}>Add Question</Button>
+          <Button onClick={() => setIsModalOpen(true)}>Question</Button>
 
           {/* Modal */}
           <Modal
