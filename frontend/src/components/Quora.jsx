@@ -1,41 +1,64 @@
-import React, { useEffect, useState } from 'react';
-import QuoraHeader from './QuoraHeader';
-import Sidebar from './Sidebar';
-import Feed from './Feed';
-import Widget from './Widget';
+
+import React, { useEffect, useState } from "react";
+import QuoraHeader from "./QuoraHeader";
+import Sidebar from "./Sidebar";
+import Feed from "./Feed";
+import Widget from "./Widget";
 import "./css/Quora.css";
-import axios from 'axios';
+import axios from "axios";
 
 function Quora() {
   const [questions, setQuestions] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(""); // default to empty string
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Fetch questions (all or filtered) from backend
+  // Fetch questions from backend (optionally filtered by category)
   const fetchQuestions = async (category = "") => {
+    setLoading(true);
+    setError("");
     try {
-      const res = await axios.get("/api/questions", {
-        params: category ? { category } : {}
-      });
-      setQuestions(res.data);
+      // Only send category if it's non-empty
+      const params = category ? { category } : {};
+      console.log("Fetching questions for category:", category || "All");
+
+      const res = await axios.get("http://localhost:8080/api/questions", { params });
+      setQuestions(res.data.reverse());
     } catch (err) {
       console.error(err);
+      setError("Failed to fetch questions. Please try again.");
+      setQuestions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch questions whenever selectedCategory changes
   useEffect(() => {
-    fetchQuestions(); // fetch all questions on mount
-  }, []);
+    fetchQuestions(selectedCategory);
+  }, [selectedCategory]);
 
+  // Update selected category when user clicks a category
   const handleCategoryClick = (category) => {
-    fetchQuestions(category);
+    setSelectedCategory(category || ""); // ensure always a string
   };
 
   return (
-    <div className='quora'>         
+    <div className="quora">
       <QuoraHeader />
       <div className="quora__contents">
         <div className="quora__content">
-          <Sidebar onCategoryClick={handleCategoryClick} />
-          <Feed questions={questions} />
+          <Sidebar
+            onCategoryClick={handleCategoryClick}
+            selectedCategory={selectedCategory}
+          />
+          {loading ? (
+            <p>Loading questions...</p>
+          ) : error ? (
+            <p className="error">{error}</p>
+          ) : (
+            <Feed questions={questions} />
+          )}
           <Widget />
         </div>
       </div>
@@ -44,3 +67,4 @@ function Quora() {
 }
 
 export default Quora;
+

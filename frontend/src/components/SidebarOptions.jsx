@@ -2,7 +2,7 @@ import React from "react";
 import { Add } from "@material-ui/icons";
 import "./css/SidebarOptions.css";
 
-function SidebarOptions({ onCategoryClick }) {
+function SidebarOptions({ onCategoryClick, selectedCategory }) {
   const categories = [
     { name: "History", img: "https://cdn.pixabay.com/photo/2014/01/18/10/14/vaulted-cellar-247391_640.jpg" },
     { name: "Business", img: "https://media.istockphoto.com/id/1418476287/photo/businessman-analyzing-companys-financial-balance-sheet-working-with-digital-augmented-reality.webp" },
@@ -12,8 +12,8 @@ function SidebarOptions({ onCategoryClick }) {
     { name: "Science", img: "https://media.istockphoto.com/id/1414916333/photo/metaverse-and-future-digital-technology-businessman-hand-holding-virtual-global-internet.webp" },
     { name: "Health", img: "https://cdn.pixabay.com/photo/2017/07/02/19/24/dumbbells-2465478_640.jpg" },
     { name: "Movies", img: "https://media.istockphoto.com/id/534129330/photo/reel-of-film.webp" },
-    { name: "Technology", img: "data:image/jpeg;base64,...", },
-    { name: "Education", img: "data:image/png;base64,...", }
+    { name: "Technology", img: "data:image/jpeg;base64,..." },
+    { name: "Education", img: "data:image/png;base64,..." }
   ];
 
   return (
@@ -21,7 +21,7 @@ function SidebarOptions({ onCategoryClick }) {
       {categories.map((cat) => (
         <div
           key={cat.name}
-          className="sidebarOption"
+          className={`sidebarOption ${selectedCategory === cat.name ? "active" : ""}`}
           onClick={() => onCategoryClick(cat.name)}
         >
           <img src={cat.img} alt={cat.name} />
