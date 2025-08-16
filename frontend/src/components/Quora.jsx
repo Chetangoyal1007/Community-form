@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import QuoraHeader from "./QuoraHeader";
 import Sidebar from "./Sidebar";
@@ -9,7 +8,7 @@ import axios from "axios";
 
 function Quora() {
   const [questions, setQuestions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(""); // default to empty string
+  const [selectedCategory, setSelectedCategory] = useState(""); // default to all
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,7 +17,6 @@ function Quora() {
     setLoading(true);
     setError("");
     try {
-      // Only send category if it's non-empty
       const params = category ? { category } : {};
       console.log("Fetching questions for category:", category || "All");
 
@@ -43,9 +41,14 @@ function Quora() {
     setSelectedCategory(category || ""); // ensure always a string
   };
 
+  // Reset to show all questions when Home is clicked
+  const handleHomeClick = () => {
+    setSelectedCategory("");
+  };
+
   return (
     <div className="quora">
-      <QuoraHeader />
+      <QuoraHeader onHomeClick={handleHomeClick} />
       <div className="quora__contents">
         <div className="quora__content">
           <Sidebar
@@ -57,7 +60,7 @@ function Quora() {
           ) : error ? (
             <p className="error">{error}</p>
           ) : (
-            <Feed questions={questions} />
+            <Feed selectedCategory={selectedCategory} questions={questions} />
           )}
           <Widget />
         </div>
@@ -67,4 +70,3 @@ function Quora() {
 }
 
 export default Quora;
-

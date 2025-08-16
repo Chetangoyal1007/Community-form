@@ -7,7 +7,7 @@ import {
   RepeatOneOutlined,
   ShareOutlined,
   DeleteOutline,
-} from "@material-ui/icons"; // ✅ import delete icon
+} from "@material-ui/icons"; 
 import React, { useState } from "react";
 import "./css/Post.css";
 import { Modal } from "react-responsive-modal";
@@ -39,20 +39,14 @@ function Post({ post }) {
     setAnswer(value);
   };
 
-  // ✅ Submit Answer
+  // Submit Answer
   const handleSubmit = async () => {
     if (post?._id && answer !== "") {
-      const config = {
-        headers: { "Content-Type": "application/json" },
-      };
-      const body = {
-        answer: answer,
-        questionId: post?._id,
-        user: user,
-      };
+      const config = { headers: { "Content-Type": "application/json" } };
+      const body = { answer, questionId: post?._id, user };
       await api
         .post("/api/answers", body, config)
-        .then((res) => {
+        .then(() => {
           alert("Answer added successfully");
           setIsModalOpen(false);
           window.location.reload();
@@ -61,8 +55,8 @@ function Post({ post }) {
     }
   };
 
-  // ✅ Delete Answer
-  const handleDelete = async (answerId) => {
+  // Delete Answer
+  const handleDeleteAnswer = async (answerId) => {
     if (window.confirm("Are you sure you want to delete this answer?")) {
       try {
         await api.delete(`/api/answers/${answerId}`);
@@ -75,15 +69,35 @@ function Post({ post }) {
     }
   };
 
+  // Delete Question
+  const handleDeleteQuestion = async () => {
+    if (window.confirm("Are you sure you want to delete this question?")) {
+      try {
+        await api.delete(`/api/questions/${post?._id}`);
+        alert("Question deleted successfully");
+        window.location.reload();
+      } catch (error) {
+        console.log(error);
+        alert("Failed to delete question");
+      }
+    }
+  };
+
   return (
     <div className="post">
       {/* User Info */}
       <div className="post__info">
         <Avatar src={post?.user?.photo} />
         <h4>{post?.user?.userName}</h4>
-        <small>
-          <LastSeen date={post?.createdAt} />
-        </small>
+        <small><LastSeen date={post?.createdAt} /></small>
+
+        {/* Delete Question Button (only owner) */}
+        {user?.email === post?.user?.email && (
+          <DeleteOutline
+            style={{ cursor: "pointer", color: "red", marginLeft: "auto" }}
+            onClick={handleDeleteQuestion}
+          />
+        )}
       </div>
 
       {/* Question Body */}
@@ -111,9 +125,7 @@ function Post({ post }) {
               <h1>{post?.questionName}</h1>
               <p>
                 asked by <span className="name">{post?.user?.userName}</span> on{" "}
-                <span className="name">
-                  {new Date(post?.createdAt).toLocaleString()}
-                </span>
+                <span className="name">{new Date(post?.createdAt).toLocaleString()}</span>
               </p>
             </div>
             <div className="modal__answer">
@@ -133,7 +145,7 @@ function Post({ post }) {
             </div>
           </Modal>
         </div>
-        {post.questionUrl !== "" && <img src={post.questionUrl} alt="url" />}
+        {post.questionUrl && <img src={post.questionUrl} alt="url" />}
       </div>
 
       {/* Footer */}
@@ -197,25 +209,17 @@ function Post({ post }) {
             >
               <div style={{ display: "flex", alignItems: "center" }}>
                 <Avatar src={_a?.user?.photo} />
-                <div
-                  style={{ margin: "0px 10px" }}
-                  className="post-info"
-                >
+                <div style={{ margin: "0px 10px" }} className="post-info">
                   <p>{_a?.user?.userName}</p>
-                  <span>
-                    <LastSeen date={_a?.createdAt} />
-                  </span>
+                  <span><LastSeen date={_a?.createdAt} /></span>
                 </div>
               </div>
 
-              {/* ✅ Delete button (only for owner) */}
+              {/* Delete Answer (owner only) */}
               {user?.email === _a?.user?.email && (
                 <DeleteOutline
-                  style={{
-                    cursor: "pointer",
-                    color: "red",
-                  }}
-                  onClick={() => handleDelete(_a?._id)}
+                  style={{ cursor: "pointer", color: "red" }}
+                  onClick={() => handleDeleteAnswer(_a?._id)}
                 />
               )}
             </div>

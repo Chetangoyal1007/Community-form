@@ -12,7 +12,7 @@ function SidebarOptions({ onCategoryClick, selectedCategory }) {
     { name: "Science", img: "https://media.istockphoto.com/id/1414916333/photo/metaverse-and-future-digital-technology-businessman-hand-holding-virtual-global-internet.webp" },
     { name: "Health", img: "https://cdn.pixabay.com/photo/2017/07/02/19/24/dumbbells-2465478_640.jpg" },
     { name: "Movies", img: "https://media.istockphoto.com/id/534129330/photo/reel-of-film.webp" },
-    { name: "Technology", img: "data:image/jpeg;base64,..." },
+    { name: "Technology", img: "" },
     { name: "Education", img: "data:image/png;base64,..." }
   ];
 

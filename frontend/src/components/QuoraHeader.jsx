@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import HomeIcon from "@material-ui/icons/Home";
 import FeaturedPlayListOutlinedIcon from "@material-ui/icons/FeaturedPlayListOutlined";
@@ -20,25 +19,22 @@ import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
-function QuoraHeader() {
+function QuoraHeader({ onHomeClick }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [question, setQuestion] = useState("");
-  const [category, setCategory] = useState(""); // ✅ new state
+  const [category, setCategory] = useState("");
   const Close = <CloseIcon />;
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
 
-  // ✅ Add Question Handler
   const handleSubmit = async () => {
     if (question.trim() !== "" && category.trim() !== "") {
-      const config = {
-        headers: { "Content-Type": "application/json" },
-      };
+      const config = { headers: { "Content-Type": "application/json" } };
       const body = {
         questionName: question,
         questionUrl: inputUrl,
-        category: category, // ✅ send category too
+        category: category,
         user: user,
       };
 
@@ -46,10 +42,9 @@ function QuoraHeader() {
         const res = await api.post("/api/questions", body, config);
         alert(res.data.message);
 
-        // reset modal fields
         setQuestion("");
         setInputUrl("");
-        setCategory(""); // ✅ reset category
+        setCategory("");
         setIsModalOpen(false);
       } catch (e) {
         console.error(e);
@@ -60,7 +55,6 @@ function QuoraHeader() {
     }
   };
 
-  // ✅ Logout
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       signOut(auth)
@@ -68,9 +62,7 @@ function QuoraHeader() {
           dispatch(logout());
           console.log("Logged out");
         })
-        .catch(() => {
-          console.log("Error in logout");
-        });
+        .catch(() => console.log("Error in logout"));
     }
   };
 
@@ -87,7 +79,7 @@ function QuoraHeader() {
 
         {/* Header Icons */}
         <div className="qHeader__icons">
-          <div className="qHeader__icon">
+          <div className="qHeader__icon" onClick={onHomeClick} style={{ cursor: "pointer" }}>
             <HomeIcon />
           </div>
           <div className="qHeader__icon">
@@ -115,7 +107,6 @@ function QuoraHeader() {
           <span onClick={handleLogout}>
             <Avatar src={user?.photo} alt={user?.displayName || "User"} />
           </span>
-
           <Button onClick={() => setIsModalOpen(true)}>Question</Button>
 
           {/* Modal */}
@@ -150,8 +141,6 @@ function QuoraHeader() {
                 placeholder="Start your question with 'What', 'How', 'Why', etc."
                 fullWidth
               />
-
-              {/* ✅ Category Dropdown */}
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -172,7 +161,6 @@ function QuoraHeader() {
                 <option value="Others">Others</option>
               </select>
 
-              {/* Optional URL */}
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <input
                   type="text"
@@ -186,7 +174,7 @@ function QuoraHeader() {
                   }}
                   placeholder="Optional: include a link that gives context"
                 />
-                {inputUrl !== "" && (
+                {inputUrl && (
                   <img
                     style={{ height: "40vh", objectFit: "contain" }}
                     src={inputUrl}
@@ -197,10 +185,7 @@ function QuoraHeader() {
             </div>
 
             <div className="modal__buttons">
-              <button
-                className="cancel"
-                onClick={() => setIsModalOpen(false)}
-              >
+              <button className="cancel" onClick={() => setIsModalOpen(false)}>
                 Cancel
               </button>
               <button onClick={handleSubmit} type="submit" className="add">
