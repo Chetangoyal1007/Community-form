@@ -30,5 +30,29 @@ router.post("/", async (req, res) => {
     });
   }
 });
+// DELETE answer by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedAnswer = await answerDB.findByIdAndDelete(req.params.id);
+
+    if (!deletedAnswer) {
+      return res.status(404).send({
+        status: false,
+        message: "Answer not found",
+      });
+    }
+
+    res.status(200).send({
+      status: true,
+      message: "Answer deleted successfully",
+    });
+  } catch (e) {
+    res.status(500).send({
+      status: false,
+      message: "Error while deleting answer",
+    });
+  }
+});
+
 
 module.exports = router;
