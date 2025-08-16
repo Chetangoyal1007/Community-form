@@ -1,11 +1,11 @@
 import React from "react";
-import "./css/Sidebar.css";
 import SidebarOptions from "./SidebarOptions";
+import "./css/Sidebar.css";
 
-function Sidebar() {
+function Sidebar({ onCategoryClick }) {
   return (
     <div className="sidebar">
-      <SidebarOptions />
+      <SidebarOptions onCategoryClick={onCategoryClick} />
     </div>
   );
 }
