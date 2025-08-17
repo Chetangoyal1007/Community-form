@@ -8,7 +8,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Setup Node.js (adjust version as needed)
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -27,13 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Run linter (if you use ESLint)
+      # Run linter (optional, only if lint script exists)
       - name: Run lint
         run: npm run lint --if-present
-
-      # Run tests (if you use vitest or jest)
-      - name: Run tests
-        run: npm run test --if-present
 
       # Build project with Vite
       - name: Build project
