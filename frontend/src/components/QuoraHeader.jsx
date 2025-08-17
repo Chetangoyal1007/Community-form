@@ -156,9 +156,9 @@ function QuoraHeader({ onHomeClick }) {
                 <option value="">Select Category</option>
                 <option value="Programming">History</option>
                 <option value="Science">Business</option>
-                <option value="Technology">Technology</option>
-                <option value="Business">Business</option>
-                <option value="History">History</option>
+                <option value="Technology">Psychology</option>
+                <option value="Business">Cooking</option>
+                <option value="History">Music</option>
                 <option value="Psychology">Psychology</option>
                 <option value="Movies">Movies</option>
                 <option value="Health">Health</option>
