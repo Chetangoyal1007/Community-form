@@ -12,7 +12,7 @@ function SidebarOptions({ onCategoryClick }) {
     { name: "Science", img: "https://cdn.pixabay.com/photo/2020/05/07/19/21/cosmonaut-5142852_1280.jpg" },
     { name: "Health", img: "https://cdn.pixabay.com/photo/2017/07/02/19/24/dumbbells-2465478_640.jpg" },
     { name: "Movies", img: "https://cdn.pixabay.com/photo/2017/03/13/17/25/clapper-2140602_1280.jpg" },
-    { name: "Technology", img: "https://cdn.pixabay.com/photo/2021/10/11/16/00/robot-6701139_1280.jpg", },
+    { name: "Technology", img: "https://cdn.pixabay.com/photo/2014/03/25/23/04/technology-298256_1280.jpg", },
     { name: "Education", img: "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg", }
   ];
 
