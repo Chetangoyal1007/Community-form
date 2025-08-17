@@ -8,12 +8,12 @@ function SidebarOptions({ onCategoryClick }) {
     { name: "Business", img: "https://media.istockphoto.com/id/1350415370/photo/partnership-multi-exposure-of-investor-businessman-handshake-with-partner-for-successful.jpg?s=2048x2048&w=is&k=20&c=Q6CFBhfj3-XRT-NZ26RTXJPgrpLCr0WoDPw1Iw5SGls=" },
     { name: "Psychology", img: "https://cdn.pixabay.com/photo/2014/11/24/18/50/mind-544404_1280.png" },
     { name: "Cooking", img: "https://cdn.pixabay.com/photo/2016/11/21/16/03/campfire-1846142_1280.jpg" },
-    { name: "Music", img: "https://media.istockphoto.com/id/1451301857/photo/golden-3d-podcast-icon-isolated-on-white-background-3d-illustration.webp" },
-    { name: "Science", img: "https://media.istockphoto.com/id/1414916333/photo/metaverse-and-future-digital-technology-businessman-hand-holding-virtual-global-internet.webp" },
+    { name: "Music", img: "https://cdn.pixabay.com/photo/2020/05/01/14/15/music-sheet-5117328_1280.jpg" },
+    { name: "Science", img: "https://cdn.pixabay.com/photo/2020/05/07/19/21/cosmonaut-5142852_1280.jpg" },
     { name: "Health", img: "https://cdn.pixabay.com/photo/2017/07/02/19/24/dumbbells-2465478_640.jpg" },
-    { name: "Movies", img: "https://media.istockphoto.com/id/534129330/photo/reel-of-film.webp" },
-    { name: "Technology", img: "data:image/jpeg;base64,...", },
-    { name: "Education", img: "data:image/png;base64,...", }
+    { name: "Movies", img: "https://cdn.pixabay.com/photo/2017/03/13/17/25/clapper-2140602_1280.jpg" },
+    { name: "Technology", img: "https://cdn.pixabay.com/photo/2021/10/11/16/00/robot-6701139_1280.jpg", },
+    { name: "Education", img: "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg", }
   ];
 
   return (
