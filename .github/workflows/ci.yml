@@ -24,12 +24,12 @@ jobs:
 
       # Install backend dependencies
       - name: Install backend dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       # Install frontend dependencies
       - name: Install frontend dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps --prefix frontend
 
-      # Build frontend
-      - name: Build frontend
-        run: npm run dev
+      # ✅ Verify frontend build (if you add "build" script later)
+      - name: Verify frontend build
+        run: npm run build --prefix frontend --if-present
