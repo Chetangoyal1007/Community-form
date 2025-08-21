@@ -19,8 +19,16 @@ function Quora() {
     setError("");
     try {
       const params = category ? { category } : {};
+
       const res = await api.get("/api/questions", { params });
       setQuestions(res.data.reverse ? res.data.reverse() : res.data);
+
+      console.log("Fetching questions for category:", category || "All");
+
+const res = await axios.get("https://community-form-backend.onrender.com/api/questions", { params });
+setQuestions(res.data.reverse ? res.data.reverse() : res.data);
+
+ main
     } catch (err) {
       console.error(err);
       setError("Failed to fetch questions. Please try again.");
