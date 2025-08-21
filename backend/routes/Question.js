@@ -1,7 +1,36 @@
+
 const express = require("express");
 const router = express.Router();
 const questionDB = require("../models/Question");
-const answerDB = require("../models/Answer"); // assuming answers are in a separate collection
+const answerDB = require("../models/Answer"); 
+
+// Improved search: returns questions with allAnswers populated (like main GET)
+router.get("/search", async (req, res) => {
+  try {
+    const searchQuery = req.query.query;
+    if (!searchQuery || searchQuery.trim() === "") {
+      return res.status(400).send({ status: false, message: "Query parameter is required" });
+    }
+
+    // Use aggregation to match and populate answers
+    const questions = await questionDB.aggregate([
+      { $match: { questionName: { $regex: searchQuery, $options: "i" } } },
+      {
+        $lookup: {
+          from: "answers",
+          localField: "_id",
+          foreignField: "questionId",
+          as: "allAnswers",
+        },
+      },
+    ]);
+
+    res.status(200).send({ status: true, data: questions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ status: false, message: "Error searching questions" });
+  }
+});
 
 // -----------------------------
 // POST /api/questions → Add new question

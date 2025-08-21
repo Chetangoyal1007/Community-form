@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import QuoraHeader from "./QuoraHeader";
+import api from "../api";
 import Sidebar from "./Sidebar";
 import Feed from "./Feed";
 import Widget from "./Widget";
@@ -18,13 +19,42 @@ function Quora() {
     setError("");
     try {
       const params = category ? { category } : {};
+
+      const res = await api.get("/api/questions", { params });
+      setQuestions(res.data.reverse ? res.data.reverse() : res.data);
+
       console.log("Fetching questions for category:", category || "All");
 
-      const res = await axios.get("https://community-form-backend.onrender.com/api/questions", { params });
-      setQuestions(res.data.reverse());
+const res = await axios.get("https://community-form-backend.onrender.com/api/questions", { params });
+setQuestions(res.data.reverse ? res.data.reverse() : res.data);
+
+ main
     } catch (err) {
       console.error(err);
       setError("Failed to fetch questions. Please try again.");
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search questions by text
+  const handleSearch = async (searchText) => {
+    if (!searchText.trim()) {
+      fetchQuestions(selectedCategory);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.get(`/api/questions/search?query=${encodeURIComponent(searchText)}`);
+      if (res.data && res.data.status && res.data.data) {
+        setQuestions(res.data.data);
+      } else {
+        setQuestions([]);
+      }
+    } catch (err) {
+      setError("Failed to search questions. Please try again.");
       setQuestions([]);
     } finally {
       setLoading(false);
@@ -48,7 +78,7 @@ function Quora() {
 
   return (
     <div className="quora">
-      <QuoraHeader onHomeClick={handleHomeClick} />
+  <QuoraHeader onHomeClick={handleHomeClick} onSearch={handleSearch} />
       <div className="quora__contents">
         <div className="quora__content">
           <Sidebar
@@ -60,7 +90,7 @@ function Quora() {
           ) : error ? (
             <p className="error">{error}</p>
           ) : (
-            <Feed selectedCategory={selectedCategory} questions={questions} />
+            <Feed selectedCategory={selectedCategory} questions={Array.isArray(questions) ? questions : []} />
           )}
           <Widget />
         </div>

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { useEffect } from "react";
 import HomeIcon from "@material-ui/icons/Home";
 import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined"; // replaced FeaturedPlayListOutlinedIcon
 import {
@@ -19,13 +20,28 @@ import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
-function QuoraHeader({ onHomeClick }) {
+function QuoraHeader({ onHomeClick, onSearch }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [question, setQuestion] = useState("");
   const [category, setCategory] = useState("");
   const [visibility, setVisibility] = useState("Public");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Search bar state
+  const [searchInput, setSearchInput] = useState("");
+  const searchTimeout = useRef(null);
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (onSearch) {
+      searchTimeout.current = setTimeout(() => {
+        onSearch(value);
+      }, 300);
+    }
+  };
 
   const Close = <CloseIcon />;
   const dispatch = useDispatch();
@@ -124,7 +140,13 @@ function QuoraHeader({ onHomeClick }) {
         {/* Search */}
         <div className="qHeader__input">
           <Search />
-          <input type="text" placeholder="Search" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchInput}
+            onChange={handleSearchChange}
+            style={{ width: "200px" }}
+          />
         </div>
 
         {/* Right Section */}
@@ -215,11 +237,14 @@ function QuoraHeader({ onHomeClick }) {
                         style={{
                           padding: "10px 12px",
                           cursor: "pointer",
-                          background: visibility === option ? "#e1f5fe" : "white",
+                          background:
+                            visibility === option ? "#e1f5fe" : "white",
                           color: option === "Public" ? "#0277bd" : "#ef6c00",
                           fontWeight: visibility === option ? "600" : "500",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f1f1")}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.background = "#f1f1f1")
+                        }
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.background =
                             visibility === option ? "#e1f5fe" : "white")
