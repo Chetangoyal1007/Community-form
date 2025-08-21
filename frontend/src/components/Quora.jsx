@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import QuoraHeader from "./QuoraHeader";
-import api from "../api";
 import Sidebar from "./Sidebar";
 import Feed from "./Feed";
 import Widget from "./Widget";
@@ -20,15 +19,16 @@ function Quora() {
     try {
       const params = category ? { category } : {};
 
-      const res = await api.get("/api/questions", { params });
-      setQuestions(res.data.reverse ? res.data.reverse() : res.data);
-
       console.log("Fetching questions for category:", category || "All");
 
-const res = await axios.get("https://community-form-backend.onrender.com/api/questions", { params });
-setQuestions(res.data.reverse ? res.data.reverse() : res.data);
+      const response = await axios.get(
+        "https://community-form-backend.onrender.com/api/questions",
+        { params }
+      );
 
- main
+      setQuestions(
+        response.data.reverse ? response.data.reverse() : response.data
+      );
     } catch (err) {
       console.error(err);
       setError("Failed to fetch questions. Please try again.");
@@ -47,9 +47,14 @@ setQuestions(res.data.reverse ? res.data.reverse() : res.data);
     setLoading(true);
     setError("");
     try {
-      const res = await api.get(`/api/questions/search?query=${encodeURIComponent(searchText)}`);
-      if (res.data && res.data.status && res.data.data) {
-        setQuestions(res.data.data);
+      const response = await axios.get(
+        `https://community-form-backend.onrender.com/api/questions/search?query=${encodeURIComponent(
+          searchText
+        )}`
+      );
+
+      if (response.data && response.data.status && response.data.data) {
+        setQuestions(response.data.data);
       } else {
         setQuestions([]);
       }
@@ -78,7 +83,7 @@ setQuestions(res.data.reverse ? res.data.reverse() : res.data);
 
   return (
     <div className="quora">
-  <QuoraHeader onHomeClick={handleHomeClick} onSearch={handleSearch} />
+      <QuoraHeader onHomeClick={handleHomeClick} onSearch={handleSearch} />
       <div className="quora__contents">
         <div className="quora__content">
           <Sidebar
@@ -90,7 +95,10 @@ setQuestions(res.data.reverse ? res.data.reverse() : res.data);
           ) : error ? (
             <p className="error">{error}</p>
           ) : (
-            <Feed selectedCategory={selectedCategory} questions={Array.isArray(questions) ? questions : []} />
+            <Feed
+              selectedCategory={selectedCategory}
+              questions={Array.isArray(questions) ? questions : []}
+            />
           )}
           <Widget />
         </div>
