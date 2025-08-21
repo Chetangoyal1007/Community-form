@@ -83,7 +83,12 @@ function Quora() {
 
   return (
     <div className="quora">
-      <QuoraHeader onHomeClick={handleHomeClick} onSearch={handleSearch} />
+      <QuoraHeader 
+  onHomeClick={handleHomeClick} 
+  onSearch={handleSearch} 
+  onQuestionAdded={() => fetchQuestions(selectedCategory)} // ✅ new prop
+/>
+
       <div className="quora__contents">
         <div className="quora__content">
           <Sidebar
