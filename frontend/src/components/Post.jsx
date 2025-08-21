@@ -7,7 +7,7 @@ import {
   RepeatOneOutlined,
   ShareOutlined,
   DeleteOutline,
-} from "@material-ui/icons"; 
+} from "@material-ui/icons";
 import React, { useState } from "react";
 import "./css/Post.css";
 import { Modal } from "react-responsive-modal";
@@ -21,10 +21,74 @@ import ReactHtmlParser from "html-react-parser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
 
+// LastSeen Component
 function LastSeen({ date }) {
+  return <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />;
+}
+
+// Recursive Answer Component
+function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
+  const [isReplying, setIsReplying] = useState(false);
+  const [reply, setReply] = useState("");
+
   return (
-    <div>
-      <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />
+    <div style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
+      <div className="answer-header">
+        <div className="answer-user">
+          <Avatar src={answer?.user?.photo} />
+          <div className="answer-user-info">
+            <p>{answer?.user?.userName}</p>
+            <span><LastSeen date={answer?.createdAt} /></span>
+          </div>
+        </div>
+
+        {user?.email === answer?.user?.email && (
+          <DeleteOutline
+            className="delete-icon"
+            onClick={() => handleDeleteAnswer(answer?._id)}
+          />
+        )}
+      </div>
+
+      <div className="post-answer">{ReactHtmlParser(answer?.answer)}</div>
+
+      <button
+        className="reply-btn"
+        onClick={() => setIsReplying(!isReplying)}
+      >
+        Reply
+      </button>
+
+      {isReplying && (
+        <div className="reply-box">
+          <ReactQuill
+            value={reply}
+            onChange={setReply}
+            placeholder="Write a reply..."
+          />
+          <button
+            onClick={() => {
+              handleReplySubmit(reply, answer._id);
+              setIsReplying(false);
+              setReply("");
+            }}
+            className="submit-reply"
+          >
+            Submit Reply
+          </button>
+        </div>
+      )}
+
+      {answer.replies &&
+        answer.replies.map((child) => (
+          <Answer
+            key={child._id}
+            answer={child}
+            user={user}
+            handleDeleteAnswer={handleDeleteAnswer}
+            handleReplySubmit={handleReplySubmit}
+          />
+        ))}
     </div>
   );
 }
@@ -35,83 +99,88 @@ function Post({ post }) {
   const Close = <CloseIcon />;
   const user = useSelector(selectUser);
 
-  const handleQuill = (value) => {
-    setAnswer(value);
-  };
+  const handleQuill = (value) => setAnswer(value);
 
-  // Submit Answer
   const handleSubmit = async () => {
     if (post?._id && answer !== "") {
-      const config = { headers: { "Content-Type": "application/json" } };
-      const body = { answer, questionId: post?._id, user };
-      await api
-        .post("/api/answers", body, config)
-        .then(() => {
-          alert("Answer added successfully");
-          setIsModalOpen(false);
-          window.location.reload();
-        })
-        .catch((e) => console.log(e));
+      const body = { answer, questionId: post?._id, parentAnswerId: null, user };
+      try {
+        await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
+        alert("Answer added successfully");
+        setIsModalOpen(false);
+        window.location.reload();
+      } catch (e) {
+        console.log(e);
+      }
     }
   };
 
-  // Delete Answer
+  const handleReplySubmit = async (reply, parentId) => {
+    if (!reply) return;
+    const body = { answer: reply, questionId: post?._id, parentAnswerId: parentId, user };
+    try {
+      await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
+      alert("Reply added successfully");
+      window.location.reload();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const handleDeleteAnswer = async (answerId) => {
-    if (window.confirm("Are you sure you want to delete this answer?")) {
-      try {
-        await api.delete(`/api/answers/${answerId}`);
-        alert("Answer deleted successfully");
-        window.location.reload();
-      } catch (error) {
-        console.log(error);
-        alert("Failed to delete answer");
-      }
+    if (!window.confirm("Are you sure you want to delete this answer?")) return;
+    try {
+      await api.delete(`/api/answers/${answerId}`);
+      alert("Answer deleted successfully");
+      window.location.reload();
+    } catch (e) {
+      console.log(e);
+      alert("Failed to delete answer");
     }
   };
 
-  // Delete Question
   const handleDeleteQuestion = async () => {
-    if (window.confirm("Are you sure you want to delete this question?")) {
-      try {
-        await api.delete(`/api/questions/${post?._id}`);
-        alert("Question deleted successfully");
-        window.location.reload();
-      } catch (error) {
-        console.log(error);
-        alert("Failed to delete question");
-      }
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+    try {
+      await api.delete(`/api/questions/${post?._id}`);
+      alert("Question deleted successfully");
+      window.location.reload();
+    } catch (e) {
+      console.log(e);
+      alert("Failed to delete question");
     }
   };
+
+  const buildAnswerTree = (answers) => {
+    const map = {};
+    const roots = [];
+    answers.forEach((a) => { map[a._id] = { ...a, replies: [] }; });
+    answers.forEach((a) => {
+      if (a.parentAnswerId) map[a.parentAnswerId]?.replies.push(map[a._id]);
+      else roots.push(map[a._id]);
+    });
+    return roots;
+  };
+
+  const nestedAnswers = buildAnswerTree(post?.allAnswers || []);
 
   return (
     <div className="post">
-      {/* User Info */}
       <div className="post__info">
         <Avatar src={post?.user?.photo} />
         <h4>{post?.user?.userName}</h4>
         <small><LastSeen date={post?.createdAt} /></small>
-
-        {/* Delete Question Button (only owner) */}
         {user?.email === post?.user?.email && (
-          <DeleteOutline
-            style={{ cursor: "pointer", color: "red", marginLeft: "auto" }}
-            onClick={handleDeleteQuestion}
-          />
+          <DeleteOutline className="delete-icon" onClick={handleDeleteQuestion} />
         )}
       </div>
 
-      {/* Question Body */}
       <div className="post__body">
         <div className="post__question">
           <p>{post?.questionName}</p>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="post__btnAnswer"
-          >
+          <button className="post__btnAnswer" onClick={() => setIsModalOpen(true)}>
             Answer
           </button>
-
-          {/* Answer Modal */}
           <Modal
             open={isModalOpen}
             closeIcon={Close}
@@ -129,26 +198,17 @@ function Post({ post }) {
               </p>
             </div>
             <div className="modal__answer">
-              <ReactQuill
-                value={answer}
-                onChange={handleQuill}
-                placeholder="Enter your answer"
-              />
+              <ReactQuill value={answer} onChange={handleQuill} placeholder="Enter your answer" />
             </div>
             <div className="modal__button">
-              <button className="cancle" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </button>
-              <button onClick={handleSubmit} type="submit" className="add">
-                Add Answer
-              </button>
+              <button className="cancle" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button className="add" onClick={handleSubmit}>Add Answer</button>
             </div>
           </Modal>
         </div>
         {post.questionUrl && <img src={post.questionUrl} alt="url" />}
       </div>
 
-      {/* Footer */}
       <div className="post__footer">
         <div className="post__footerAction">
           <ArrowUpwardOutlined />
@@ -162,70 +222,17 @@ function Post({ post }) {
         </div>
       </div>
 
-      {/* Answers Count */}
-      <p
-        style={{
-          color: "rgba(0,0,0,0.5)",
-          fontSize: "12px",
-          fontWeight: "bold",
-          margin: "10px 0",
-        }}
-      >
-        {post?.allAnswers.length} Answer(s)
-      </p>
+      <p className="answers-count">{post?.allAnswers.length} Answer(s)</p>
 
-      {/* Answers Section */}
-      <div
-        style={{
-          margin: "5px 0px 0px 0px ",
-          padding: "5px 0px 0px 20px",
-          borderTop: "1px solid lightgray",
-        }}
-        className="post__answer"
-      >
-        {post?.allAnswers?.map((_a) => (
-          <div
-            key={_a?._id}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              padding: "10px 5px",
-              borderTop: "1px solid lightgray",
-            }}
-            className="post-answer-container"
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "10px",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#888",
-                justifyContent: "space-between",
-              }}
-              className="post-answered"
-            >
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Avatar src={_a?.user?.photo} />
-                <div style={{ margin: "0px 10px" }} className="post-info">
-                  <p>{_a?.user?.userName}</p>
-                  <span><LastSeen date={_a?.createdAt} /></span>
-                </div>
-              </div>
-
-              {/* Delete Answer (owner only) */}
-              {user?.email === _a?.user?.email && (
-                <DeleteOutline
-                  style={{ cursor: "pointer", color: "red" }}
-                  onClick={() => handleDeleteAnswer(_a?._id)}
-                />
-              )}
-            </div>
-
-            <div className="post-answer">{ReactHtmlParser(_a?.answer)}</div>
-          </div>
+      <div className="nested-answers">
+        {nestedAnswers.map((ans) => (
+          <Answer
+            key={ans._id}
+            answer={ans}
+            user={user}
+            handleDeleteAnswer={handleDeleteAnswer}
+            handleReplySubmit={handleReplySubmit}
+          />
         ))}
       </div>
     </div>
