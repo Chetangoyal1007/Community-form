@@ -1,5 +1,4 @@
-import React, { useState, useRef } from "react";
-import { useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import HomeIcon from "@material-ui/icons/Home";
 import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined"; // replaced FeaturedPlayListOutlinedIcon
 import {
@@ -10,7 +9,7 @@ import {
   ExpandMore,
 } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
-import { Avatar, Button, Input, Tooltip } from "@material-ui/core";
+import { Avatar, Button, Tooltip, TextField } from "@material-ui/core";
 import "./css/QuoraHeader.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
@@ -20,7 +19,7 @@ import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
-function QuoraHeader({ onHomeClick, onSearch }) {
+function QuoraHeader({ onHomeClick, onSearch,onQuestionAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [question, setQuestion] = useState("");
@@ -31,6 +30,7 @@ function QuoraHeader({ onHomeClick, onSearch }) {
   // Search bar state
   const [searchInput, setSearchInput] = useState("");
   const searchTimeout = useRef(null);
+
   // Handle search input change
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -77,6 +77,9 @@ function QuoraHeader({ onHomeClick, onSearch }) {
       setCategory("");
       setVisibility("Public");
       setIsModalOpen(false);
+      if (onQuestionAdded) {
+       onQuestionAdded();
+     }
     } catch (e) {
       console.error(e);
       alert("Error posting question");
@@ -157,7 +160,7 @@ function QuoraHeader({ onHomeClick, onSearch }) {
             </span>
           </Tooltip>
 
-          <Button onClick={() => setIsModalOpen(true)}> Add Question</Button>
+          <Button onClick={() => setIsModalOpen(true)}>Add Question</Button>
 
           {/* Modal */}
           <Modal
@@ -260,13 +263,15 @@ function QuoraHeader({ onHomeClick, onSearch }) {
 
             {/* Question Input */}
             <div className="modal__Field">
-              <Input
+              <TextField
                 onChange={(e) => setQuestion(e.target.value)}
                 value={question}
                 type="text"
                 placeholder="Start your question with 'What', 'How', 'Why', etc."
                 fullWidth
+                variant="outlined"
               />
+
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -293,17 +298,14 @@ function QuoraHeader({ onHomeClick, onSearch }) {
               </select>
 
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <input
+                <TextField
                   type="text"
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  style={{
-                    margin: "5px 0",
-                    border: "1px solid lightgray",
-                    padding: "10px",
-                    outline: "none",
-                  }}
                   placeholder="Optional: include a link that gives context"
+                  fullWidth
+                  variant="outlined"
+                  style={{ margin: "5px 0" }}
                 />
                 {inputUrl && (
                   <img
