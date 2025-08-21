@@ -20,7 +20,7 @@ function Quora() {
       const params = category ? { category } : {};
       console.log("Fetching questions for category:", category || "All");
 
-      const res = await axios.get("http://localhost:8080/api/questions", { params });
+      const res = await axios.get("https://community-form-backend.onrender.com/api/questions", { params });
       setQuestions(res.data.reverse());
     } catch (err) {
       console.error(err);
