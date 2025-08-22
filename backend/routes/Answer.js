@@ -37,13 +37,14 @@ router.post("/", async (req, res) => {
 });
 
 // GET: Fetch answers for a question (with optional nesting)
+// GET: Fetch all answers (including replies) for a question
 router.get("/:questionId", async (req, res) => {
   try {
     const { questionId } = req.params;
 
-    // Get only top-level answers (parentAnswerId = null)
+    // ✅ fetch ALL answers for this question
     const answers = await answerDB
-      .find({ questionId, parentAnswerId: null })
+      .find({ questionId })
       .sort({ createdAt: -1 });
 
     res.status(200).send({
@@ -58,6 +59,7 @@ router.get("/:questionId", async (req, res) => {
     });
   }
 });
+
 
 // GET: Fetch replies for a given answer
 router.get("/replies/:answerId", async (req, res) => {

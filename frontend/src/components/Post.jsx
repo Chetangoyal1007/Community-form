@@ -17,22 +17,27 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ReactTimeAgo from "react-time-ago";
 import api from "../api";
-import ReactHtmlParser from "html-react-parser";
+import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
 
-// LastSeen Component
 function LastSeen({ date }) {
   return <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />;
 }
 
-// Recursive Answer Component
-function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
+// ✅ Answer Component with inline Voting
+function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVote }) {
   const [isReplying, setIsReplying] = useState(false);
   const [reply, setReply] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const MAX_LENGTH = 200;
+  const answerText = answer?.answer || "";
+  const shouldTruncate = answerText.length > MAX_LENGTH;
 
   return (
     <div style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
+      {/* Header with inline voting */}
       <div className="answer-header">
         <div className="answer-user">
           <Avatar src={answer?.user?.photo} />
@@ -40,6 +45,19 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
             <p>{answer?.user?.userName}</p>
             <span><LastSeen date={answer?.createdAt} /></span>
           </div>
+        </div>
+
+        {/* Voting inline with user info */}
+        <div className="vote-box-inline">
+          <ArrowUpwardOutlined
+            className="vote-btn"
+            onClick={() => handleVote(answer._id, "answer", "up")}
+          />
+          <span className="vote-count">{answer.votes || 0}</span>
+          <ArrowDownwardOutlined
+            className="vote-btn"
+            onClick={() => handleVote(answer._id, "answer", "down")}
+          />
         </div>
 
         {user?.email === answer?.user?.email && (
@@ -50,15 +68,35 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
         )}
       </div>
 
-      <div className="post-answer">{ReactHtmlParser(answer?.answer)}</div>
+      {/* Answer Text */}
+      <div className="post-answer">
+        {isExpanded || !shouldTruncate
+          ? parse(answerText)
+          : parse(answerText.substring(0, MAX_LENGTH) + "...")}
+      </div>
 
-      <button
-        className="reply-btn"
-        onClick={() => setIsReplying(!isReplying)}
-      >
-        Reply
-      </button>
+      {/* Actions */}
+      <div className="post-actions">
+        {shouldTruncate && (
+          <button
+            type="button"
+            className="read-more-btn"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? "Show Less" : "Read More"}
+          </button>
+        )}
 
+        <button
+          type="button"
+          className="reply-btn"
+          onClick={() => setIsReplying(!isReplying)}
+        >
+          Reply
+        </button>
+      </div>
+
+      {/* Reply Box */}
       {isReplying && (
         <div className="reply-box">
           <ReactQuill
@@ -67,18 +105,28 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
             placeholder="Write a reply..."
           />
           <button
-            onClick={() => {
+            type="button"
+            className="submit-reply"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
+              if (!cleanedReply) {
+                alert("Reply cannot be empty!");
+                return;
+              }
               handleReplySubmit(reply, answer._id);
               setIsReplying(false);
               setReply("");
             }}
-            className="submit-reply"
           >
-            Submit Reply
+            Submit
           </button>
         </div>
       )}
 
+      {/* Recursive Replies */}
       {answer.replies &&
         answer.replies.map((child) => (
           <Answer
@@ -87,6 +135,7 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit }) {
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
             handleReplySubmit={handleReplySubmit}
+            handleVote={handleVote}
           />
         ))}
     </div>
@@ -101,8 +150,10 @@ function Post({ post }) {
 
   const handleQuill = (value) => setAnswer(value);
 
+  // Submit new Answer
   const handleSubmit = async () => {
-    if (post?._id && answer !== "") {
+    const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
+    if (post?._id && cleanedAnswer !== "") {
       const body = { answer, questionId: post?._id, parentAnswerId: null, user };
       try {
         await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
@@ -112,11 +163,18 @@ function Post({ post }) {
       } catch (e) {
         console.log(e);
       }
+    } else {
+      alert("Answer cannot be empty!");
     }
   };
 
+  // Submit Reply
   const handleReplySubmit = async (reply, parentId) => {
-    if (!reply) return;
+    const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
+    if (!cleanedReply) {
+      alert("Reply cannot be empty!");
+      return;
+    }
     const body = { answer: reply, questionId: post?._id, parentAnswerId: parentId, user };
     try {
       await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
@@ -127,6 +185,7 @@ function Post({ post }) {
     }
   };
 
+  // Delete Answer
   const handleDeleteAnswer = async (answerId) => {
     if (!window.confirm("Are you sure you want to delete this answer?")) return;
     try {
@@ -139,6 +198,7 @@ function Post({ post }) {
     }
   };
 
+  // Delete Question
   const handleDeleteQuestion = async () => {
     if (!window.confirm("Are you sure you want to delete this question?")) return;
     try {
@@ -151,6 +211,31 @@ function Post({ post }) {
     }
   };
 
+  // Handle Votes (question or answer)
+  // Handle Votes (question or answer)
+const handleVote = async (targetId, targetType, voteType) => {
+  try {
+    const body = {
+      answerId: targetType === "answer" ? targetId : null,
+      questionId: targetType === "question" ? targetId : null,
+      userId: user._id,   // 👈 must send userId, not whole user object
+      voteType
+    };
+
+    const res = await api.post(`/api/votes`, body, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    console.log("Vote response:", res.data);
+    window.location.reload();
+  } catch (e) {
+    console.error("Vote failed:", e);
+    alert("Failed to vote");
+  }
+};
+
+
+  // Build nested tree
   const buildAnswerTree = (answers) => {
     const map = {};
     const roots = [];
@@ -166,19 +251,40 @@ function Post({ post }) {
 
   return (
     <div className="post">
+      {/* Question Info with inline votes */}
       <div className="post__info">
-        <Avatar src={post?.user?.photo} />
-        <h4>{post?.user?.userName}</h4>
-        <small><LastSeen date={post?.createdAt} /></small>
+        <div className="post-user">
+          <Avatar src={post?.user?.photo} />
+          <h4>{post?.user?.userName}</h4>
+          <small><LastSeen date={post?.createdAt} /></small>
+        </div>
+
+        <div className="vote-box-inline">
+          <ArrowUpwardOutlined
+            className="vote-btn"
+            onClick={() => handleVote(post._id, "question", "up")}
+          />
+          <span className="vote-count">{post.votes || 0}</span>
+          <ArrowDownwardOutlined
+            className="vote-btn"
+            onClick={() => handleVote(post._id, "question", "down")}
+          />
+        </div>
+
         {user?.email === post?.user?.email && (
           <DeleteOutline className="delete-icon" onClick={handleDeleteQuestion} />
         )}
       </div>
 
+      {/* Question Body */}
       <div className="post__body">
         <div className="post__question">
           <p>{post?.questionName}</p>
-          <button className="post__btnAnswer" onClick={() => setIsModalOpen(true)}>
+          <button
+            type="button"
+            className="post__btnAnswer"
+            onClick={() => setIsModalOpen(true)}
+          >
             Answer
           </button>
           <Modal
@@ -201,29 +307,30 @@ function Post({ post }) {
               <ReactQuill value={answer} onChange={handleQuill} placeholder="Enter your answer" />
             </div>
             <div className="modal__button">
-              <button className="cancle" onClick={() => setIsModalOpen(false)}>Cancel</button>
-              <button className="add" onClick={handleSubmit}>Add Answer</button>
+              <button type="button" className="cancle" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </button>
+              <button type="button" className="add" onClick={handleSubmit}>
+                Add Answer
+              </button>
             </div>
           </Modal>
         </div>
         {post.questionUrl && <img src={post.questionUrl} alt="url" />}
       </div>
 
+      {/* Footer icons */}
       <div className="post__footer">
-        <div className="post__footerAction">
-          <ArrowUpwardOutlined />
-          <ArrowDownwardOutlined />
-        </div>
         <RepeatOneOutlined />
         <ChatBubbleOutlined />
         <div className="post__footerLeft">
-          <ShareOutlined />
-          <MoreHorizOutlined />
+          <ShareOutlined className="MuiSvgIcon-root" />
+          <MoreHorizOutlined className="MuiSvgIcon-root" />
         </div>
       </div>
 
+      {/* Answers */}
       <p className="answers-count">{post?.allAnswers.length} Answer(s)</p>
-
       <div className="nested-answers">
         {nestedAnswers.map((ans) => (
           <Answer
@@ -232,6 +339,7 @@ function Post({ post }) {
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
             handleReplySubmit={handleReplySubmit}
+            handleVote={handleVote}
           />
         ))}
       </div>
