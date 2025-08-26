@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import HomeIcon from "@material-ui/icons/Home";
-import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined"; // replaced FeaturedPlayListOutlinedIcon
+import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined";
 import {
   AssignmentTurnedInOutlined,
   NotificationsOutlined,
   PeopleAltOutlined,
   Search,
-  ExpandMore,
 } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
 import { Avatar, Button, Tooltip, TextField, Menu, MenuItem } from "@material-ui/core";
@@ -18,20 +17,23 @@ import { auth } from "../Firebase";
 import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom"; // ✅ import router hook
 
-function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
+function QuoraHeader({ onHomeClick, onSearch,onQuestionAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [question, setQuestion] = useState("");
   const [category, setCategory] = useState("");
   const [visibility, setVisibility] = useState("Public");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Search bar state
   const [searchInput, setSearchInput] = useState("");
   const searchTimeout = useRef(null);
 
-  // Handle search input change
+  const navigate = useNavigate(); // ✅ navigation instance
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
+
+  // Search debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
@@ -43,10 +45,6 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
     }
   };
 
-  const Close = <CloseIcon />;
-  const dispatch = useDispatch();
-  const user = useSelector(selectUser);
-
   const handleSubmit = async () => {
     if (question.trim() === "" || category.trim() === "") {
       alert("Please enter a question and select a category.");
@@ -56,8 +54,8 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
     const body = {
       questionName: question,
       questionUrl: inputUrl,
-      category: category,
-      visibility: visibility,
+      category,
+      visibility,
       user: {
         uid: user?.uid,
         displayName: user?.displayName,
@@ -71,15 +69,14 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
       const res = await api.post("/api/questions", body, config);
       alert(res.data.message);
 
-      // Reset modal fields
       setQuestion("");
       setInputUrl("");
       setCategory("");
       setVisibility("Public");
       setIsModalOpen(false);
       if (onQuestionAdded) {
-        onQuestionAdded();
-      }
+       onQuestionAdded();
+     }
     } catch (e) {
       console.error(e);
       alert("Error posting question");
@@ -128,13 +125,22 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
         {/* Header Icons */}
         <div className="qHeader__icons">
           <Tooltip title="Home" arrow>
-            <div className="qHeader__icon" onClick={onHomeClick}>
+            <div
+              className="qHeader__icon"
+              onClick={() => {
+                if (onHomeClick) onHomeClick(); // ✅ reset to all posts
+                navigate("/"); // ✅ navigate to home
+              }}
+            >
               <HomeIcon />
             </div>
           </Tooltip>
 
           <Tooltip title="Articles" arrow>
-            <div className="qHeader__icon">
+            <div
+              className="qHeader__icon"
+              onClick={() => navigate("/articles")} // ✅ navigate to articles
+            >
               <DescriptionOutlinedIcon />
             </div>
           </Tooltip>
@@ -195,169 +201,47 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
 
           <Button onClick={() => setIsModalOpen(true)}>Add Question</Button>
 
-          {/* Modal */}
-          <Modal
-            open={isModalOpen}
-            closeIcon={Close}
-            onClose={() => setIsModalOpen(false)}
-            closeOnEsc
-            center
-            closeOnOverlayClick={false}
-            styles={{ overlay: { height: "auto" } }}
-          >
+          {/* Modal for Add Question */}
+          <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} center>
             <div className="modal__title">
               <h5>Add Question</h5>
-              <h5>Share Link</h5>
             </div>
-
-            {/* User Info and Visibility */}
             <div className="modal__info">
               <Avatar src={user?.photo} alt={user?.displayName || "User"} />
-              <div
-                className="visibility-dropdown"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginLeft: "10px",
-                  padding: "8px 15px",
-                  borderRadius: "50px",
-                  cursor: "pointer",
-                  position: "relative",
-                  minWidth: "130px",
-                  justifyContent: "space-between",
-                  background: visibility === "Public" ? "#e1f5fe" : "#fff3e0",
-                  border: "1px solid #bdbdbd",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <PeopleAltOutlined
-                    style={{
-                      marginRight: "8px",
-                      color: visibility === "Public" ? "#0277bd" : "#ef6c00",
-                    }}
-                  />
-                  <p
-                    style={{
-                      margin: 0,
-                      fontWeight: "600",
-                      color: visibility === "Public" ? "#0277bd" : "#ef6c00",
-                    }}
-                  >
-                    {visibility}
-                  </p>
-                </div>
-                <ExpandMore style={{ color: "#616161" }} />
-                {isDropdownOpen && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "50px",
-                      left: 0,
-                      background: "#fff",
-                      border: "1px solid lightgray",
-                      borderRadius: "10px",
-                      width: "100%",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                      zIndex: 10,
-                    }}
-                  >
-                    {["Public", "Private"].map((option) => (
-                      <div
-                        key={option}
-                        onClick={() => {
-                          setVisibility(option);
-                          setIsDropdownOpen(false);
-                        }}
-                        style={{
-                          padding: "10px 12px",
-                          cursor: "pointer",
-                          background:
-                            visibility === option ? "#e1f5fe" : "white",
-                          color: option === "Public" ? "#0277bd" : "#ef6c00",
-                          fontWeight: visibility === option ? "600" : "500",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background = "#f1f1f1")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background =
-                            visibility === option ? "#e1f5fe" : "white")
-                        }
-                      >
-                        {option}
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="modal__scope">
+                <p>{visibility}</p>
               </div>
             </div>
-
-            {/* Question Input */}
-            <div className="modal__Field">
+            <div className="modal__field">
               <TextField
-                onChange={(e) => setQuestion(e.target.value)}
-                value={question}
-                type="text"
-                placeholder="Start your question with 'What', 'How', 'Why', etc."
                 fullWidth
+                label="Your Question"
                 variant="outlined"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
               />
-
-              <select
+              <TextField
+                fullWidth
+                label="Category"
+                variant="outlined"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                style={{
-                  margin: "10px 0",
-                  padding: "10px",
-                  border: "1px solid lightgray",
-                  borderRadius: "5px",
-                  outline: "none",
-                  width: "100%",
-                }}
-              >
-                <option value="">Select Category</option>
-                <option value="History">History</option>
-                <option value="Business">Business</option>
-                <option value="Psychology">Psychology</option>
-                <option value="Cooking">Cooking</option>
-                <option value="Music">Music</option>
-                <option value="Science">Science</option>
-                <option value="Health">Health</option>
-                <option value="Movies">Movies</option>
-                <option value="Technology">Technology</option>
-                <option value="Education">Education</option>
-              </select>
-
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <TextField
-                  type="text"
-                  value={inputUrl}
-                  onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="Optional: include a link that gives context"
-                  fullWidth
-                  variant="outlined"
-                  style={{ margin: "5px 0" }}
-                />
-                {inputUrl && (
-                  <img
-                    style={{ height: "40vh", objectFit: "contain" }}
-                    src={inputUrl}
-                    alt="preview"
-                  />
-                )}
-              </div>
+                style={{ marginTop: "10px" }}
+              />
+              <TextField
+                fullWidth
+                label="Optional URL"
+                variant="outlined"
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                style={{ marginTop: "10px" }}
+              />
             </div>
-
-            {/* Modal Buttons */}
             <div className="modal__buttons">
-              <button className="cancel" onClick={() => setIsModalOpen(false)}>
-                Cancel
-              </button>
-              <button onClick={handleSubmit} type="submit" className="add">
-                Add Question
-              </button>
+              <Button onClick={handleSubmit} color="primary" variant="contained">
+                Add
+              </Button>
+              <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
             </div>
           </Modal>
         </div>
