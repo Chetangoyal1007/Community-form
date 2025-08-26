@@ -210,29 +210,24 @@ function Post({ post }) {
       alert("Failed to delete question");
     }
   };
-
-  // Handle Votes (question or answer)
-  // Handle Votes (question or answer)
-const handleVote = async (targetId, targetType, voteType) => {
+  // Vote Function
+const handleVote = async (id, type, direction) => {
   try {
-    const body = {
-      answerId: targetType === "answer" ? targetId : null,
-      questionId: targetType === "question" ? targetId : null,
-      userId: user._id,   // 👈 must send userId, not whole user object
-      voteType
-    };
+    const body = { 
+      targetId: id, 
+      targetType: type, 
+      direction, 
+      userId: user?.email   // ✅ use email instead of _id
+    }; 
 
-    const res = await api.post(`/api/votes`, body, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-    console.log("Vote response:", res.data);
+    await api.post("/api/votes", body, { headers: { "Content-Type": "application/json" } });
     window.location.reload();
   } catch (e) {
-    console.error("Vote failed:", e);
-    alert("Failed to vote");
+    console.log(e);
+    alert("Voting failed");
   }
 };
+
 
 
   // Build nested tree
