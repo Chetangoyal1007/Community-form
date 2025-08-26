@@ -61,36 +61,23 @@ router.post("/", async (req, res) => {
 // -----------------------------
 // GET /api/questions → Fetch questions (optional filter by category)
 // -----------------------------
+// backend: routes/Questions.js
 router.get("/", async (req, res) => {
   try {
-    const categoryFilter = req.query.category;
+    const { category } = req.query;
 
-    let matchStage = {};
-    if (categoryFilter) {
-      matchStage = { category: categoryFilter }; // filter by category
+    let filter = {};
+    if (category && category.trim() !== "") {
+      filter.category = category;
     }
 
-    const questions = await questionDB.aggregate([
-      { $match: matchStage },
-      {
-        $lookup: {
-          from: "answers", // collection name in MongoDB
-          localField: "_id",
-          foreignField: "questionId",
-          as: "allAnswers",
-        },
-      },
-    ]);
-
-    res.status(200).send(questions);
+    const questions = await Question.find(filter).sort({ createdAt: -1 });
+    res.json(questions);
   } catch (err) {
-    console.error(err);
-    res.status(500).send({
-      status: false,
-      message: "Unable to get the question details",
-    });
+    res.status(500).json({ error: "Error fetching questions" });
   }
 });
+
 
 // -----------------------------
 // DELETE /api/questions/:id → Delete question
