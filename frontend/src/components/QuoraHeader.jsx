@@ -9,7 +9,7 @@ import {
   ExpandMore,
 } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
-import { Avatar, Button, Tooltip, TextField } from "@material-ui/core";
+import { Avatar, Button, Tooltip, TextField, Menu, MenuItem } from "@material-ui/core";
 import "./css/QuoraHeader.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
@@ -86,14 +86,32 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
     }
   };
 
+
+  // Avatar menu state
+  const [anchorEl, setAnchorEl] = useState(null);
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      signOut(auth)
-        .then(() => {
-          dispatch(logout());
-        })
-        .catch(() => console.log("Error logging out"));
-    }
+    handleMenuClose();
+    signOut(auth)
+      .then(() => {
+        dispatch(logout());
+      })
+      .catch(() => console.log("Error logging out"));
+  };
+  const handleSwitchUser = () => {
+    handleMenuClose();
+    signOut(auth)
+      .then(() => {
+        dispatch(logout());
+        // Optionally, redirect to login page or show login modal
+        window.location.reload();
+      })
+      .catch(() => console.log("Error switching user"));
   };
 
   return (
@@ -154,11 +172,26 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
 
         {/* Right Section */}
         <div className="qHeader__Rem">
-          <Tooltip title="Logout" arrow>
-            <span onClick={handleLogout}>
-              <Avatar src={user?.photo} alt={user?.displayName || "User"} />
+          <Tooltip title={user?.displayName || user?.email || "User"} arrow>
+            <span onClick={handleAvatarClick} style={{ cursor: "pointer" }}>
+              <Avatar alt={user?.displayName || user?.email || "User"}>
+                {((user?.displayName && user.displayName[0].toUpperCase()) ||
+                  (user?.email && user.email[0].toUpperCase()) ||
+                  "U")}
+              </Avatar>
             </span>
           </Tooltip>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            getContentAnchorEl={null}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            transformOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem onClick={handleSwitchUser}>Switch User</MenuItem>
+          </Menu>
 
           <Button onClick={() => setIsModalOpen(true)}>Add Question</Button>
 
