@@ -17,21 +17,25 @@ function SidebarOptions({ onCategoryClick }) {
   ];
 
   return (
-    <div className="sidebarOptions">
-      {categories.map((cat) => (
-        <div
-          key={cat.name}
-          className="sidebarOption"
-          onClick={() => onCategoryClick(cat.name)}
-        >
-          <img src={cat.img} alt={cat.name} />
-          <p>{cat.name}</p>
+    <div className="sidebarOptionsBox">
+      <div className="sidebarOptions__header">
+        <h5>Categories</h5>
+      </div>
+      <div className="sidebarOptions">
+        {categories.map((cat) => (
+          <div
+            key={cat.name}
+            className="sidebarOption"
+            onClick={() => onCategoryClick(cat.name)}
+          >
+            <img src={cat.img} alt={cat.name} />
+            <p>{cat.name}</p>
+          </div>
+        ))}
+        <div className="sidebarOption">
+          <Add />
+          <p className="text">Discover Spaces</p>
         </div>
-      ))}
-
-      <div className="sidebarOption">
-        <Add />
-        <p className="text">Discover Spaces</p>
       </div>
     </div>
   );
