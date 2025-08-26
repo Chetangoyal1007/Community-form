@@ -17,6 +17,11 @@ function App() {
   const user = useSelector(selectUser);
   const dispatch = useDispatch();
 
+  // ✅ API base URL (local if available, else production)
+  const API_BASE =
+    import.meta.env.VITE_API_BASE ||
+    "https://community-form-backend.onrender.com";
+
   // ✅ State for questions
   const [questions, setQuestions] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -25,10 +30,7 @@ function App() {
   const fetchQuestions = async (category = "") => {
     try {
       const params = category ? { category } : {};
-      const response = await axios.get(
-        "https://community-form-backend.onrender.com/api/questions",
-        { params }
-      );
+      const response = await axios.get(`${API_BASE}/api/questions`, { params });
 
       // reverse so latest posts come first
       const data = Array.isArray(response.data)
@@ -49,7 +51,7 @@ function App() {
     }
     try {
       const response = await axios.get(
-        `https://community-form-backend.onrender.com/api/questions/search?query=${encodeURIComponent(
+        `${API_BASE}/api/questions/search?query=${encodeURIComponent(
           searchText
         )}`
       );
@@ -64,17 +66,15 @@ function App() {
     }
   };
 
-  // ✅ Home button handler → reset category + fetch all
-// ✅ Home button handler → just reset category
-const handleHomeClick = () => {
-  setSelectedCategory(""); 
-};
+  // ✅ Home button handler → just reset category
+  const handleHomeClick = () => {
+    setSelectedCategory("");
+  };
 
-// ✅ Effect will always fetch based on category ("" = all posts)
-useEffect(() => {
-  fetchQuestions(selectedCategory);
-}, [selectedCategory]);
-
+  // ✅ Effect will always fetch based on category ("" = all posts)
+  useEffect(() => {
+    fetchQuestions(selectedCategory);
+  }, [selectedCategory]);
 
   // ✅ Auth listener
   useEffect(() => {
