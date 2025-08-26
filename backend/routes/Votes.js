@@ -1,30 +1,49 @@
 const express = require("express");
 const router = express.Router();
 const Vote = require("../models/Vote");
+const Question = require("../models/Question");
+const Answer = require("../models/Answer");
 
-// Create / update vote
+
 router.post("/", async (req, res) => {
   try {
-    const { answerId, questionId, userId, voteType } = req.body;
+    console.log("📩 Incoming vote request:", req.body); // 👈 log body
 
-    if (!userId || (!answerId && !questionId)) {
-      return res.status(400).json({ message: "Missing fields" });
+    const { userId, targetId, targetType, direction } = req.body;
+
+    if (!userId || !targetId || !targetType || !direction) {
+      return res.status(400).json({ 
+        message: "Missing fields", 
+        received: req.body // 👈 send back body for debugging
+      });
     }
 
-    // find existing
-    let vote = await Vote.findOne({ userId, answerId, questionId });
-    if (vote) {
-      vote.voteType = voteType;
-      await vote.save();
+    let existingVote = await Vote.findOne({ userId, targetId, targetType });
+
+    if (existingVote) {
+      if (existingVote.direction === direction) {
+        await Vote.deleteOne({ _id: existingVote._id });
+      } else {
+        existingVote.direction = direction;
+        await existingVote.save();
+      }
     } else {
-      vote = new Vote({ userId, answerId, questionId, voteType });
-      await vote.save();
+      await Vote.create({ userId, targetId, targetType, direction });
     }
 
-    res.json({ message: "Vote recorded", vote });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    const votes = await Vote.find({ targetId, targetType });
+    const total = votes.reduce((sum, v) => sum + (v.direction === "up" ? 1 : -1), 0);
+
+    if (targetType === "question") {
+      await Question.findByIdAndUpdate(targetId, { votes: total });
+    } else {
+      await Answer.findByIdAndUpdate(targetId, { votes: total });
+    }
+
+    res.json({ message: "Vote updated", totalVotes: total });
+  } catch (e) {
+    console.error("❌ Voting error:", e);
+    res.status(500).json({ message: "Error while voting" });
   }
 });
 
