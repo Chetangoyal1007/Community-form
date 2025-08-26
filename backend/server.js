@@ -10,7 +10,8 @@ const db = require("./db.js");
 
 // Routers
 const router = require("./routes");        // main API routes
-const voteRouter = require("./routes/Votes"); // ✅ 
+const voteRouter = require("./routes/Votes"); // ✅
+const articleRouter = require("./routes/Articles"); 
 
 
 
@@ -30,7 +31,7 @@ app.use(cors());
 // ============================
 app.use("/api", router);
 app.use("/api/votes", voteRouter);  // ✅ Voting routes
-
+app.use("/api/articles", articleRouter);
 
 // ============================
 // Serve frontend in production
