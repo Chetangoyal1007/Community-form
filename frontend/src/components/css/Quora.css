@@ -1,23 +1,45 @@
+
 .quora {
-  width: "100%";
+  width: 100%;
   min-width: fit-content;
 }
 
-.quora__contents {
+  .quora__contents {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 24px 0 24px 0;
+      background-color: rgba(0, 0, 0, 0.05);
+      width: 100%;
+      box-sizing: border-box;
+      gap: 1.5cm;
+    }
+
+.quora__sidebar-left {
+  flex: 0 0 270px;
+  max-width: 320px;
+  min-width: 240px;
   display: flex;
-  justify-content: center;
-  padding: 50px 0;
-  background-color: rgba(0, 0, 0, 0.05);
-  min-width: fit-content;
-  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.quora__content {
+.quora__main-feed {
+  flex: 1 1 auto;
+  min-width: 350px;
+  max-width: 1000px;
   display: flex;
-  flex-direction: row;
-  padding: 0px 10px;
-  width: 100%;
-  max-width: 1200px;
+  flex-direction: column;
+}
+
+.quora__sidebar-right {
+  flex: 0 0 270px;
+  max-width: 320px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .react-responsive-modal-modal {

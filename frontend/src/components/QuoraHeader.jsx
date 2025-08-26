@@ -19,7 +19,7 @@ import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
-function QuoraHeader({ onHomeClick, onSearch,onQuestionAdded }) {
+function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [question, setQuestion] = useState("");
@@ -78,8 +78,8 @@ function QuoraHeader({ onHomeClick, onSearch,onQuestionAdded }) {
       setVisibility("Public");
       setIsModalOpen(false);
       if (onQuestionAdded) {
-       onQuestionAdded();
-     }
+        onQuestionAdded();
+      }
     } catch (e) {
       console.error(e);
       alert("Error posting question");

@@ -90,11 +90,13 @@ function Quora() {
 />
 
       <div className="quora__contents">
-        <div className="quora__content">
+        <div className="quora__sidebar-left">
           <Sidebar
             onCategoryClick={handleCategoryClick}
             selectedCategory={selectedCategory}
           />
+        </div>
+        <div className="quora__main-feed">
           {loading ? (
             <p>Loading questions...</p>
           ) : error ? (
@@ -105,6 +107,8 @@ function Quora() {
               questions={Array.isArray(questions) ? questions : []}
             />
           )}
+        </div>
+        <div className="quora__sidebar-right">
           <Widget />
         </div>
       </div>
