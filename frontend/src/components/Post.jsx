@@ -1,13 +1,16 @@
 import { Avatar } from "@material-ui/core";
 import {
-  ArrowDownwardOutlined,
-  ArrowUpwardOutlined,
+  ThumbUpAltOutlined,
+  ThumbUpAlt,
+  ThumbDownAltOutlined,
+  ThumbDownAlt,
   ChatBubbleOutlined,
   MoreHorizOutlined,
   RepeatOneOutlined,
   ShareOutlined,
   DeleteOutline,
 } from "@material-ui/icons";
+
 import React, { useState } from "react";
 import "./css/Post.css";
 import { Modal } from "react-responsive-modal";
@@ -22,12 +25,13 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
 
 function LastSeen({ date }) {
-  return (
-    <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />
-  );
+  if (!date) return null; // ✅ prevent crash
+  const validDate = new Date(date);
+  if (isNaN(validDate)) return null; // ✅ prevent NaN error
+  return <ReactTimeAgo date={validDate} locale="en-US" timeStyle="round" />;
 }
 
-// ✅ Answer Component with inline Voting (upVotes + downVotes)
+// ✅ Answer Component with inline Voting
 function Answer({
   answer,
   user,
@@ -45,7 +49,7 @@ function Answer({
 
   return (
     <div style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
-      {/* Header with inline voting */}
+      {/* Header */}
       <div className="answer-header">
         <div className="answer-user">
           <Avatar src={answer?.user?.photo} />
@@ -57,17 +61,19 @@ function Answer({
           </div>
         </div>
 
-        {/* Voting inline with user info */}
+        {/* Voting */}
         <div className="vote-box-inline">
-          <ArrowUpwardOutlined
-            className="vote-btn"
-            onClick={() => handleVote(answer._id, "answer", "up")}
-          />
+          <button onClick={() => handleVote(answer._id, "answer", "up")}>
+            {answer.userVote === "up" ? <ThumbUpAlt /> : <ThumbUpAltOutlined />}
+          </button>
           <span className="vote-count">{answer.upVotes || 0}</span>
-          <ArrowDownwardOutlined
-            className="vote-btn"
-            onClick={() => handleVote(answer._id, "answer", "down")}
-          />
+          <button onClick={() => handleVote(answer._id, "answer", "down")}>
+            {answer.userVote === "down" ? (
+              <ThumbDownAlt />
+            ) : (
+              <ThumbDownAltOutlined />
+            )}
+          </button>
           <span className="vote-count">{answer.downVotes || 0}</span>
         </div>
 
@@ -141,7 +147,7 @@ function Answer({
       {answer.replies &&
         answer.replies.map((child) => (
           <Answer
-            key={child._id}
+            key={child._id} // ✅ unique key
             answer={child}
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
@@ -153,109 +159,14 @@ function Answer({
   );
 }
 
-function Post({ post }) {
+function Post({ post: initialPost }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
-
-  const Close = <CloseIcon />;
+  const [post, setPost] = useState(initialPost);
   const user = useSelector(selectUser);
 
+  const Close = <CloseIcon />;
   const handleQuill = (value) => setAnswer(value);
-
-  // Submit new Answer
-  const handleSubmit = async () => {
-    const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
-    if (post?._id && cleanedAnswer !== "") {
-      const body = {
-        answer,
-        questionId: post?._id,
-        parentAnswerId: null,
-        user,
-      };
-      try {
-        await api.post("/api/answers", body, {
-          headers: { "Content-Type": "application/json" },
-        });
-        alert("Answer added successfully");
-        setIsModalOpen(false);
-        window.location.reload();
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      alert("Answer cannot be empty!");
-    }
-  };
-
-  // Submit Reply
-  const handleReplySubmit = async (reply, parentId) => {
-    const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
-    if (!cleanedReply) {
-      alert("Reply cannot be empty!");
-      return;
-    }
-    const body = {
-      answer: reply,
-      questionId: post?._id,
-      parentAnswerId: parentId,
-      user,
-    };
-    try {
-      await api.post("/api/answers", body, {
-        headers: { "Content-Type": "application/json" },
-      });
-      alert("Reply added successfully");
-      window.location.reload();
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  // Delete Answer
-  const handleDeleteAnswer = async (answerId) => {
-    if (!window.confirm("Are you sure you want to delete this answer?")) return;
-    try {
-      await api.delete(`/api/answers/${answerId}`);
-      alert("Answer deleted successfully");
-      window.location.reload();
-    } catch (e) {
-      console.log(e);
-      alert("Failed to delete answer");
-    }
-  };
-
-  // Delete Question
-  const handleDeleteQuestion = async () => {
-    if (!window.confirm("Are you sure you want to delete this question?")) return;
-    try {
-      await api.delete(`/api/questions/${post?._id}`);
-      alert("Question deleted successfully");
-      window.location.reload();
-    } catch (e) {
-      console.log(e);
-      alert("Failed to delete question");
-    }
-  };
-
-  // ✅ Vote Function
-  const handleVote = async (id, type, direction) => {
-    try {
-      const body = {
-        targetId: id,
-        targetType: type,
-        direction,
-        userId: user?.email, // ✅ using email for uniqueness
-      };
-
-      await api.post("/api/votes", body, {
-        headers: { "Content-Type": "application/json" },
-      });
-      window.location.reload(); // reload so updated counts show
-    } catch (e) {
-      console.log(e);
-      alert("Voting failed");
-    }
-  };
 
   // Build nested tree
   const buildAnswerTree = (answers) => {
@@ -273,9 +184,150 @@ function Post({ post }) {
 
   const nestedAnswers = buildAnswerTree(post?.allAnswers || []);
 
+  // ✅ Add Answer
+  const handleSubmit = async () => {
+    const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
+    if (post?._id && cleanedAnswer !== "") {
+      const body = {
+        answer,
+        questionId: post?._id,
+        parentAnswerId: null,
+        user,
+      };
+      try {
+        const res = await api.post("/api/answers", body);
+        alert("Answer added successfully");
+
+        setPost((prev) => ({
+          ...prev,
+          allAnswers: [...prev.allAnswers, res.data],
+        }));
+
+        setIsModalOpen(false);
+        setAnswer("");
+      } catch (e) {
+        console.log(e);
+      }
+    } else {
+      alert("Answer cannot be empty!");
+    }
+  };
+
+  // ✅ Reply
+  const handleReplySubmit = async (reply, parentId) => {
+    const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
+    if (!cleanedReply) return alert("Reply cannot be empty!");
+    const body = { answer: reply, questionId: post?._id, parentAnswerId: parentId, user };
+    try {
+      const res = await api.post("/api/answers", body);
+      alert("Reply added successfully");
+
+      setPost((prev) => ({
+        ...prev,
+        allAnswers: [...prev.allAnswers, res.data],
+      }));
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // ✅ Delete Answer
+  const handleDeleteAnswer = async (answerId) => {
+    if (!window.confirm("Delete this answer?")) return;
+    try {
+      await api.delete(`/api/answers/${answerId}`);
+      setPost((prev) => ({
+        ...prev,
+        allAnswers: prev.allAnswers.filter((a) => a._id !== answerId),
+      }));
+    } catch (e) {
+      console.log(e);
+      alert("Failed to delete answer");
+    }
+  };
+
+  // ✅ Delete Question
+  const handleDeleteQuestion = async () => {
+    if (!window.confirm("Delete this question?")) return;
+    try {
+      await api.delete(`/api/questions/${post?._id}`);
+      alert("Question deleted successfully");
+      // TODO: navigate away instead of reload
+    } catch (e) {
+      console.log(e);
+      alert("Failed to delete question");
+    }
+  };
+
+  // ✅ Voting
+  const handleVote = async (id, type, direction) => {
+    try {
+      const body = {
+        targetId: id,
+        targetType: type,
+        direction,
+        userId: user?.email,
+      };
+
+      const res = await api.post("/api/votes", body);
+
+      // update state locally (no reload)
+      if (type === "question") {
+        setPost((prev) => {
+          let upVotes = prev.upVotes || 0;
+          let downVotes = prev.downVotes || 0;
+
+          if (res.data.message === "Vote added") {
+            if (direction === "up") upVotes++;
+            else downVotes++;
+          }
+          if (res.data.message === "Vote switched") {
+            if (direction === "up") {
+              upVotes++;
+              downVotes = Math.max(0, downVotes - 1);
+            } else {
+              downVotes++;
+              upVotes = Math.max(0, upVotes - 1);
+            }
+          }
+
+          return { ...prev, upVotes, downVotes, userVote: direction };
+        });
+      } else {
+        setPost((prev) => {
+          const updatedAnswers = prev.allAnswers.map((ans) => {
+            if (ans._id !== id) return ans;
+            let upVotes = ans.upVotes || 0;
+            let downVotes = ans.downVotes || 0;
+
+            if (res.data.message === "Vote added") {
+              if (direction === "up") upVotes++;
+              else downVotes++;
+            }
+            if (res.data.message === "Vote switched") {
+              if (direction === "up") {
+                upVotes++;
+                downVotes = Math.max(0, downVotes - 1);
+              } else {
+                downVotes++;
+                upVotes = Math.max(0, upVotes - 1);
+              }
+            }
+
+            return { ...ans, upVotes, downVotes, userVote: direction };
+          });
+          return { ...prev, allAnswers: updatedAnswers };
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      alert("Voting failed");
+    }
+  };
+
   return (
     <div className="post">
-      {/* Question Info with inline votes */}
+      {/* Question Info */}
       <div className="post__info">
         <div className="post-user">
           <Avatar src={post?.user?.photo} />
@@ -286,15 +338,13 @@ function Post({ post }) {
         </div>
 
         <div className="vote-box-inline">
-          <ArrowUpwardOutlined
-            className="vote-btn"
-            onClick={() => handleVote(post._id, "question", "up")}
-          />
+          <button onClick={() => handleVote(post._id, "question", "up")}>
+            {post.userVote === "up" ? <ThumbUpAlt /> : <ThumbUpAltOutlined />}
+          </button>
           <span className="vote-count">{post.upVotes || 0}</span>
-          <ArrowDownwardOutlined
-            className="vote-btn"
-            onClick={() => handleVote(post._id, "question", "down")}
-          />
+          <button onClick={() => handleVote(post._id, "question", "down")}>
+            {post.userVote === "down" ? <ThumbDownAlt /> : <ThumbDownAltOutlined />}
+          </button>
           <span className="vote-count">{post.downVotes || 0}</span>
         </div>
 
@@ -324,7 +374,6 @@ function Post({ post }) {
             closeOnEsc
             center
             closeOnOverlayClick={false}
-            styles={{ overlay: { height: "auto" } }}
           >
             <div className="modal__question">
               <h1>{post?.questionName}</h1>
@@ -359,7 +408,7 @@ function Post({ post }) {
         {post.questionUrl && <img src={post.questionUrl} alt="url" />}
       </div>
 
-      {/* Footer icons */}
+      {/* Footer */}
       <div className="post__footer">
         <RepeatOneOutlined />
         <ChatBubbleOutlined />
@@ -374,7 +423,7 @@ function Post({ post }) {
       <div className="nested-answers">
         {nestedAnswers.map((ans) => (
           <Answer
-            key={ans._id}
+            key={ans._id} // ✅ unique key
             answer={ans}
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
