@@ -22,11 +22,19 @@ import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
 
 function LastSeen({ date }) {
-  return <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />;
+  return (
+    <ReactTimeAgo date={new Date(date)} locale="en-US" timeStyle="round" />
+  );
 }
 
-// ✅ Answer Component with inline Voting
-function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVote }) {
+// ✅ Answer Component with inline Voting (upVotes + downVotes)
+function Answer({
+  answer,
+  user,
+  handleDeleteAnswer,
+  handleReplySubmit,
+  handleVote,
+}) {
   const [isReplying, setIsReplying] = useState(false);
   const [reply, setReply] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -43,7 +51,9 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
           <Avatar src={answer?.user?.photo} />
           <div className="answer-user-info">
             <p>{answer?.user?.userName}</p>
-            <span><LastSeen date={answer?.createdAt} /></span>
+            <span>
+              <LastSeen date={answer?.createdAt} />
+            </span>
           </div>
         </div>
 
@@ -53,11 +63,12 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
             className="vote-btn"
             onClick={() => handleVote(answer._id, "answer", "up")}
           />
-          <span className="vote-count">{answer.votes || 0}</span>
+          <span className="vote-count">{answer.upVotes || 0}</span>
           <ArrowDownwardOutlined
             className="vote-btn"
             onClick={() => handleVote(answer._id, "answer", "down")}
           />
+          <span className="vote-count">{answer.downVotes || 0}</span>
         </div>
 
         {user?.email === answer?.user?.email && (
@@ -145,6 +156,7 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
 function Post({ post }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
+
   const Close = <CloseIcon />;
   const user = useSelector(selectUser);
 
@@ -154,9 +166,16 @@ function Post({ post }) {
   const handleSubmit = async () => {
     const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
     if (post?._id && cleanedAnswer !== "") {
-      const body = { answer, questionId: post?._id, parentAnswerId: null, user };
+      const body = {
+        answer,
+        questionId: post?._id,
+        parentAnswerId: null,
+        user,
+      };
       try {
-        await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
+        await api.post("/api/answers", body, {
+          headers: { "Content-Type": "application/json" },
+        });
         alert("Answer added successfully");
         setIsModalOpen(false);
         window.location.reload();
@@ -175,9 +194,16 @@ function Post({ post }) {
       alert("Reply cannot be empty!");
       return;
     }
-    const body = { answer: reply, questionId: post?._id, parentAnswerId: parentId, user };
+    const body = {
+      answer: reply,
+      questionId: post?._id,
+      parentAnswerId: parentId,
+      user,
+    };
     try {
-      await api.post("/api/answers", body, { headers: { "Content-Type": "application/json" } });
+      await api.post("/api/answers", body, {
+        headers: { "Content-Type": "application/json" },
+      });
       alert("Reply added successfully");
       window.location.reload();
     } catch (e) {
@@ -210,31 +236,34 @@ function Post({ post }) {
       alert("Failed to delete question");
     }
   };
-  // Vote Function
-const handleVote = async (id, type, direction) => {
-  try {
-    const body = { 
-      targetId: id, 
-      targetType: type, 
-      direction, 
-      userId: user?.email   // ✅ use email instead of _id
-    }; 
 
-    await api.post("/api/votes", body, { headers: { "Content-Type": "application/json" } });
-    window.location.reload();
-  } catch (e) {
-    console.log(e);
-    alert("Voting failed");
-  }
-};
+  // ✅ Vote Function
+  const handleVote = async (id, type, direction) => {
+    try {
+      const body = {
+        targetId: id,
+        targetType: type,
+        direction,
+        userId: user?.email, // ✅ using email for uniqueness
+      };
 
-
+      await api.post("/api/votes", body, {
+        headers: { "Content-Type": "application/json" },
+      });
+      window.location.reload(); // reload so updated counts show
+    } catch (e) {
+      console.log(e);
+      alert("Voting failed");
+    }
+  };
 
   // Build nested tree
   const buildAnswerTree = (answers) => {
     const map = {};
     const roots = [];
-    answers.forEach((a) => { map[a._id] = { ...a, replies: [] }; });
+    answers.forEach((a) => {
+      map[a._id] = { ...a, replies: [] };
+    });
     answers.forEach((a) => {
       if (a.parentAnswerId) map[a.parentAnswerId]?.replies.push(map[a._id]);
       else roots.push(map[a._id]);
@@ -251,7 +280,9 @@ const handleVote = async (id, type, direction) => {
         <div className="post-user">
           <Avatar src={post?.user?.photo} />
           <h4>{post?.user?.userName}</h4>
-          <small><LastSeen date={post?.createdAt} /></small>
+          <small>
+            <LastSeen date={post?.createdAt} />
+          </small>
         </div>
 
         <div className="vote-box-inline">
@@ -259,15 +290,19 @@ const handleVote = async (id, type, direction) => {
             className="vote-btn"
             onClick={() => handleVote(post._id, "question", "up")}
           />
-          <span className="vote-count">{post.votes || 0}</span>
+          <span className="vote-count">{post.upVotes || 0}</span>
           <ArrowDownwardOutlined
             className="vote-btn"
             onClick={() => handleVote(post._id, "question", "down")}
           />
+          <span className="vote-count">{post.downVotes || 0}</span>
         </div>
 
         {user?.email === post?.user?.email && (
-          <DeleteOutline className="delete-icon" onClick={handleDeleteQuestion} />
+          <DeleteOutline
+            className="delete-icon"
+            onClick={handleDeleteQuestion}
+          />
         )}
       </div>
 
@@ -295,14 +330,24 @@ const handleVote = async (id, type, direction) => {
               <h1>{post?.questionName}</h1>
               <p>
                 asked by <span className="name">{post?.user?.userName}</span> on{" "}
-                <span className="name">{new Date(post?.createdAt).toLocaleString()}</span>
+                <span className="name">
+                  {new Date(post?.createdAt).toLocaleString()}
+                </span>
               </p>
             </div>
             <div className="modal__answer">
-              <ReactQuill value={answer} onChange={handleQuill} placeholder="Enter your answer" />
+              <ReactQuill
+                value={answer}
+                onChange={handleQuill}
+                placeholder="Enter your answer"
+              />
             </div>
             <div className="modal__button">
-              <button type="button" className="cancle" onClick={() => setIsModalOpen(false)}>
+              <button
+                type="button"
+                className="cancle"
+                onClick={() => setIsModalOpen(false)}
+              >
                 Cancel
               </button>
               <button type="button" className="add" onClick={handleSubmit}>
