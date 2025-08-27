@@ -1,33 +1,28 @@
 const mongoose = require("mongoose");
 
 const AnswerSchema = new mongoose.Schema({
-  answer: {
-    type: String,
-    required: true,
-  },
-
-  // Links answer to a question
   questionId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "questions",
+    ref: "Questions",
+    required: true,
   },
-
-  // New: allow nested replies (answers to answers)
-  parentAnswerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "answers",
-    default: null, // null means it's a direct answer to a question
-  },
-
+  answer: { type: String, required: true },
+  user: Object,
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  // ✅ votes field
+  upVotes: { type: Number, default: 0 },
+downVotes: { type: Number, default: 0 },
 
-  user: {
-    type: Object,
-    required: true,
-  },
+  // ✅ replies for nested answers
+  replies: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Answers",
+    },
+  ],
 });
 
 module.exports = mongoose.model("Answers", AnswerSchema);
