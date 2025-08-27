@@ -8,7 +8,7 @@ const ArticleSchema = new mongoose.Schema(
     imageUrl: { type: String },
     user: {
       uid: String,
-      displayName: String,
+      userName: { type: String, required: true },
       email: String,
       photo: String,
     },
