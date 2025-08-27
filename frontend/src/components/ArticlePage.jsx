@@ -65,7 +65,7 @@ function ArticlePage() {
       imageUrl,
       user: {
         uid: user?.uid,
-        displayName: user?.displayName,
+        userName: user?.displayName || user?.email?.split("@")[0] || "Anonymous",
         email: user?.email,
         photo: user?.photo,
       },
@@ -89,122 +89,179 @@ function ArticlePage() {
     }
   };
 
-  return (
-    <div style={{ padding: "20px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>Articles</h2>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setIsModalOpen(true)}
-        >
-          Write Article
-        </Button>
-      </div>
+  // ✅ Delete Article
+  const handleDelete = async (articleId) => {
+    if (!window.confirm("Are you sure you want to delete this article?")) return;
 
-      {/* Articles List */}
-      <div style={{ marginTop: "20px" }}>
-        {loading ? (
-          <div style={{ textAlign: "center", marginTop: "20px" }}>
-            <CircularProgress />
-            <Typography>Loading articles...</Typography>
-          </div>
-        ) : articles.length === 0 ? (
-          <Typography>No articles found</Typography>
-        ) : (
-          articles.map((article) => (
-            <Card key={article._id} style={{ marginBottom: "15px" }}>
-              <CardContent>
-                {/* User info */}
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <Avatar
-                    src={article.user?.photo}
-                    style={{ marginRight: "10px" }}
-                  />
-                  <Typography variant="subtitle2">
-                    {article.user?.displayName}
-                  </Typography>
-                </div>
+    try {
+      const res = await api.delete(`/api/articles/${articleId}`, {
+        data: { uid: user?.uid }, // ✅ send user.uid for ownership check
+      });
 
-                {/* Title */}
-                <Typography variant="h5" style={{ margin: "10px 0" }}>
-                  {article.title}
-                </Typography>
+      alert(res.data.message);
+      fetchArticles(page); // reload current page
+    } catch (err) {
+      console.error("Error deleting article", err);
+      alert(err.response?.data?.message || "Error deleting article");
+    }
+  };
 
-                {/* Category */}
-                <Typography variant="body2" color="textSecondary">
-                  Category: {article.category}
-                </Typography>
-
-                {/* Optional Image */}
-                {article.imageUrl && (
-                  <img
-                    src={article.imageUrl}
-                    alt="article"
-                    loading="lazy" // ✅ Lazy load images
-                    style={{
-                      width: "100%",
-                      maxHeight: "250px",
-                      objectFit: "cover",
-                      marginTop: "10px",
-                    }}
-                  />
-                )}
-
-                {/* Content */}
-                <Typography variant="body1" style={{ marginTop: "10px" }}>
-                  {article.content}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Pagination controls */}
-      <div
+return (
+  <div className="p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen text-white">
+    {/* Header */}
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-3xl font-bold tracking-wide">📰 Articles</h2>
+      <Button
+        variant="contained"
+        onClick={() => setIsModalOpen(true)}
         style={{
-          marginTop: "20px",
-          display: "flex",
-          justifyContent: "center",
-          gap: "10px",
+          background: "linear-gradient(135deg, #4f46e5, #9333ea)",
+          borderRadius: "12px",
+          padding: "10px 20px",
+          fontWeight: "600",
+          textTransform: "none",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
         }}
       >
-        <Button
-          variant="outlined"
-          disabled={page <= 1}
-          onClick={() => setPage((prev) => prev - 1)}
-        >
-          Previous
-        </Button>
-        <Typography style={{ alignSelf: "center" }}>
-          Page {page} of {totalPages}
-        </Typography>
-        <Button
-          variant="outlined"
-          disabled={page >= totalPages}
-          onClick={() => setPage((prev) => prev + 1)}
-        >
-          Next
-        </Button>
-      </div>
+        ✍️ Write Article
+      </Button>
+    </div>
 
-      {/* Modal for Writing Article */}
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        center
-        closeOnEsc
-      >
-        <h3>Write an Article</h3>
+    {/* Articles List */}
+    <div>
+      {loading ? (
+        <div className="text-center mt-10">
+          <CircularProgress style={{ color: "#9333ea" }} />
+          <Typography className="mt-2 text-gray-300">Loading articles...</Typography>
+        </div>
+      ) : articles.length === 0 ? (
+        <Typography className="text-center text-gray-400 mt-6">
+          No articles found
+        </Typography>
+      ) : (
+        articles.map((article) => (
+          <Card
+            key={article._id}
+            style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "20px",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              marginBottom: "20px",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+          >
+            <CardContent>
+              {/* User info + Delete */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Avatar src={article.user?.photo} />
+                  <Typography className="font-semibold text-sm text-gray-300">
+                    {article.user?.userName || "Anonymous"}
+                  </Typography>
+                </div>
+                {user?.uid === article.user?.uid && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleDelete(article._id)}
+                    style={{
+                      color: "#ef4444",
+                      borderColor: "#ef4444",
+                      textTransform: "none",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    🗑 Delete
+                  </Button>
+                )}
+              </div>
+
+              {/* Title */}
+              <Typography
+                variant="h5"
+                style={{ marginTop: "12px", fontWeight: "bold" }}
+                className="text-white"
+              >
+                {article.title}
+              </Typography>
+
+              {/* Category */}
+              <Typography className="text-xs text-gray-400 mt-1">
+                Category: {article.category}
+              </Typography>
+
+              {/* Image */}
+              {article.imageUrl && (
+                <img
+                  src={article.imageUrl}
+                  alt="article"
+                  loading="lazy"
+                  className="w-full max-h-72 object-cover rounded-xl mt-3 shadow-md"
+                />
+              )}
+
+              {/* Content */}
+              <Typography className="mt-4 text-gray-200 leading-relaxed">
+                {article.content}
+              </Typography>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+
+    {/* Pagination */}
+<div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "20px" }}>
+  <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+    <Button
+      variant="outlined"
+      disabled={page <= 1}
+      onClick={() => setPage((prev) => prev - 1)}
+      style={{
+        borderRadius: "10px",
+        borderColor: "#9333ea",
+        color: "#9333ea",
+        textTransform: "none",
+        minWidth: "120px",
+      }}
+    >
+      ⬅ Previous
+    </Button>
+
+    <span style={{ color: "#9CA3AF", fontSize: "16px", fontWeight: "500" }}>
+      Page {page} of {totalPages}
+    </span>
+
+    <Button
+      variant="outlined"
+      disabled={page >= totalPages}
+      onClick={() => setPage((prev) => prev + 1)}
+      style={{
+        borderRadius: "10px",
+        borderColor: "#9333ea",
+        color: "#9333ea",
+        textTransform: "none",
+        minWidth: "120px",
+      }}
+    >
+      Next ➡
+    </Button>
+  </div>
+</div>
+
+
+    {/* Modal */}
+    <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} center>
+      <div className="p-4 w-[400px]">
+        <h3 className="text-xl font-bold mb-4">✍️ Write an Article</h3>
         <TextField
           label="Title"
           fullWidth
           variant="outlined"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ margin: "10px 0" }}
+          className="mb-3"
         />
         <TextField
           label="Category"
@@ -212,7 +269,7 @@ function ArticlePage() {
           variant="outlined"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          style={{ margin: "10px 0" }}
+          className="mb-3"
         />
         <TextField
           label="Content"
@@ -222,7 +279,7 @@ function ArticlePage() {
           variant="outlined"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          style={{ margin: "10px 0" }}
+          className="mb-3"
         />
         <TextField
           label="Image URL (optional)"
@@ -230,19 +287,25 @@ function ArticlePage() {
           variant="outlined"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
-          style={{ margin: "10px 0" }}
+          className="mb-3"
         />
         <Button
+          fullWidth
           variant="contained"
-          color="primary"
           onClick={handleSubmit}
-          style={{ marginTop: "10px" }}
+          style={{
+            background: "linear-gradient(135deg, #4f46e5, #9333ea)",
+            borderRadius: "12px",
+            fontWeight: "600",
+            textTransform: "none",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+          }}
         >
-          Publish
+          🚀 Publish
         </Button>
-      </Modal>
-    </div>
-  );
+      </div>
+    </Modal>
+  </div>
+);
 }
-
 export default ArticlePage;
