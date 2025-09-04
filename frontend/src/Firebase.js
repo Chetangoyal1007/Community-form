@@ -6,7 +6,7 @@ import {getAuth, GoogleAuthProvider} from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAaNI-82hPlbOFH695y2ohqMFiJroFaOjA",
+  apiKey: "AIzaSyDcYZzpRM8quMhizg37ttySbZefdMsFWO4",
   authDomain: "community-forum-24d4b.firebaseapp.com",
   projectId: "communityform-ef33d",
   storageBucket: "community-forum-24d4b.appspot.com",
