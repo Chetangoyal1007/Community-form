@@ -20,7 +20,7 @@ const app = express();
 const server = http.createServer(app);   // 👈 Create HTTP server
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://community-form.vercel.app"], // frontend URLs
+    origin: ["http://localhost:5173", "https://community-form-eta.vercel.app"], // frontend URLs
     methods: ["GET", "POST"],
   },
 });
