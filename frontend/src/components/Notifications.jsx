@@ -8,34 +8,23 @@ const BACKEND_URL =
     : "https://community-form-backend.onrender.com";
 
 const socket = io(BACKEND_URL, {
-  transports: ["websocket"], // 👈 force websocket
+  transports: ["websocket"],
 });
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    // ✅ Fetch existing notifications from DB on mount
+    // Fetch existing notifications
     axios
       .get(`${BACKEND_URL}/api/notifications`)
-      .then((res) => {
-        setNotifications(res.data); // they’re already sorted in backend
-      })
-      .catch((err) => console.error("❌ Error fetching notifications:", err));
+      .then((res) => setNotifications(res.data))
+      .catch((err) => console.error("Error fetching notifications:", err));
 
-    // ✅ Listen for live notifications
-    socket.on("connect", () => {
-      console.log("✅ Connected to socket:", socket.id);
-    });
-
-    socket.on("notification", (data) => {
-      console.log("📩 New notification received:", data);
-      setNotifications((prev) => [data, ...prev]);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from socket");
-    });
+    // Live notifications
+    socket.on("connect", () => console.log("Socket connected:", socket.id));
+    socket.on("notification", (data) => setNotifications((prev) => [data, ...prev]));
+    socket.on("disconnect", () => console.log("Socket disconnected"));
 
     return () => {
       socket.off("notification");
@@ -45,14 +34,29 @@ export default function Notifications() {
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>🔔 Notifications</h2>
-      <ul>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
+      <h2 style={{ marginBottom: "20px", color: "#333" }}>🔔 Notifications</h2>
+
+      {notifications.length === 0 && <p style={{ color: "#777" }}>No notifications yet.</p>}
+
+      <ul style={{ listStyle: "none", padding: 0 }}>
         {notifications.map((n, i) => (
-          <li key={n._id || i}>
-            <strong>{n.type?.toUpperCase()}</strong>: {n.message}
-            <br />
-            <small>
+          <li
+            key={n._id || i}
+            style={{
+              padding: "15px",
+              marginBottom: "10px",
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              borderLeft: "5px solid #007bff",
+            }}
+          >
+            <div style={{ fontWeight: "bold", color: "#007bff", marginBottom: "5px" }}>
+              {n.type?.toUpperCase()}
+            </div>
+            <div style={{ marginBottom: "5px" }}>{n.message}</div>
+            <small style={{ color: "#555" }}>
               {new Date(n.timestamp || n.createdAt).toLocaleString()}
             </small>
           </li>
