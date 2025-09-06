@@ -1,6 +1,7 @@
+// backend/server.js
 const express = require("express");
-const http = require("http");          // 👈 Import http
-const { Server } = require("socket.io"); // 👈 Import socket.io
+const http = require("http");
+const { Server } = require("socket.io");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
@@ -10,20 +11,26 @@ const PORT = process.env.PORT || 8080;
 const db = require("./db.js");
 
 // Routers
-const router = require("./routes");        
+const router = require("./routes");
 const voteRouter = require("./routes/Votes");
 const articleRouter = require("./routes/Articles");
+const notificationRouter = require("./routes/Notification"); // ✅ notifications
+const answerRouter = require("./routes/Answer"); // ✅ answers
 
 db.connect();
 
 const app = express();
-const server = http.createServer(app);   // 👈 Create HTTP server
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://community-form-eta.vercel.app"], // frontend URLs
+    origin: [
+      "http://localhost:5173",
+      "https://community-form-eta.vercel.app"
+    ],
     methods: ["GET", "POST"],
   },
 });
+app.set("io", io);
 
 // ============================
 // Middleware
@@ -38,6 +45,8 @@ app.use(cors());
 app.use("/api", router);
 app.use("/api/votes", voteRouter);
 app.use("/api/articles", articleRouter);
+app.use("/api/notifications", notificationRouter); // ✅ mount notifications
+app.use("/api/answers", answerRouter); // ✅ mount answers
 
 // ============================
 // Socket.IO setup
@@ -69,7 +78,7 @@ if (process.env.NODE_ENV === "production") {
 // ============================
 // Start Server
 // ============================
-server.listen(PORT, () => {   // 👈 Use server.listen instead of app.listen
+server.listen(PORT, () => {
   console.log(`✅ Listening on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
 });

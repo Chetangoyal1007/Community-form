@@ -9,9 +9,10 @@ import {
   RepeatOneOutlined,
   ShareOutlined,
   DeleteOutline,
+  NotificationsNoneOutlined,
 } from "@material-ui/icons";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./css/Post.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
@@ -23,22 +24,20 @@ import api from "../api";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
+import { io } from "socket.io-client";
+
+// ---------------- Socket.IO ----------------
+const socket = io("http://localhost:8080", { transports: ["websocket"] });
 
 function LastSeen({ date }) {
-  if (!date) return null; // ✅ prevent crash
+  if (!date) return null;
   const validDate = new Date(date);
-  if (isNaN(validDate)) return null; // ✅ prevent NaN error
+  if (isNaN(validDate)) return null;
   return <ReactTimeAgo date={validDate} locale="en-US" timeStyle="round" />;
 }
 
-// ✅ Answer Component with inline Voting
-function Answer({
-  answer,
-  user,
-  handleDeleteAnswer,
-  handleReplySubmit,
-  handleVote,
-}) {
+// ---------------- Answer Component ----------------
+function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVote }) {
   const [isReplying, setIsReplying] = useState(false);
   const [reply, setReply] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,7 +48,6 @@ function Answer({
 
   return (
     <div style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
-      {/* Header */}
       <div className="answer-header">
         <div className="answer-user">
           <Avatar src={answer?.user?.photo} />
@@ -61,18 +59,13 @@ function Answer({
           </div>
         </div>
 
-        {/* Voting */}
         <div className="vote-box-inline">
           <button onClick={() => handleVote(answer._id, "answer", "up")}>
             {answer.userVote === "up" ? <ThumbUpAlt /> : <ThumbUpAltOutlined />}
           </button>
           <span className="vote-count">{answer.upVotes || 0}</span>
           <button onClick={() => handleVote(answer._id, "answer", "down")}>
-            {answer.userVote === "down" ? (
-              <ThumbDownAlt />
-            ) : (
-              <ThumbDownAltOutlined />
-            )}
+            {answer.userVote === "down" ? <ThumbDownAlt /> : <ThumbDownAltOutlined />}
           </button>
           <span className="vote-count">{answer.downVotes || 0}</span>
         </div>
@@ -85,14 +78,12 @@ function Answer({
         )}
       </div>
 
-      {/* Answer Text */}
       <div className="post-answer">
         {isExpanded || !shouldTruncate
           ? parse(answerText)
           : parse(answerText.substring(0, MAX_LENGTH) + "...")}
       </div>
 
-      {/* Actions */}
       <div className="post-actions">
         {shouldTruncate && (
           <button
@@ -113,26 +104,17 @@ function Answer({
         </button>
       </div>
 
-      {/* Reply Box */}
       {isReplying && (
         <div className="reply-box">
-          <ReactQuill
-            value={reply}
-            onChange={setReply}
-            placeholder="Write a reply..."
-          />
+          <ReactQuill value={reply} onChange={setReply} placeholder="Write a reply..." />
           <button
             type="button"
             className="submit-reply"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-
               const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
-              if (!cleanedReply) {
-                alert("Reply cannot be empty!");
-                return;
-              }
+              if (!cleanedReply) return alert("Reply cannot be empty!");
               handleReplySubmit(reply, answer._id);
               setIsReplying(false);
               setReply("");
@@ -143,11 +125,10 @@ function Answer({
         </div>
       )}
 
-      {/* Recursive Replies */}
       {answer.replies &&
         answer.replies.map((child) => (
           <Answer
-            key={child._id} // ✅ unique key
+            key={child._id}
             answer={child}
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
@@ -159,16 +140,19 @@ function Answer({
   );
 }
 
+// ---------------- Post Component ----------------
 function Post({ post: initialPost }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
   const [post, setPost] = useState(initialPost);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const user = useSelector(selectUser);
-
   const Close = <CloseIcon />;
+
   const handleQuill = (value) => setAnswer(value);
 
-  // Build nested tree
+  // ---------------- Build nested answers ----------------
   const buildAnswerTree = (answers) => {
     const map = {};
     const roots = [];
@@ -181,57 +165,71 @@ function Post({ post: initialPost }) {
     });
     return roots;
   };
-
   const nestedAnswers = buildAnswerTree(post?.allAnswers || []);
 
-  // ✅ Add Answer
+  // ---------------- Socket.IO Notifications ----------------
+  useEffect(() => {
+    socket.on("connect", () => console.log("✅ Connected to socket", socket.id));
+    socket.on("notification", (data) => {
+      setNotifications((prev) => [data, ...prev]);
+    });
+    return () => {
+      socket.off("connect");
+      socket.off("notification");
+    };
+  }, []);
+
+  // ---------------- Add Answer ----------------
   const handleSubmit = async () => {
     const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
-    if (post?._id && cleanedAnswer !== "") {
-      const body = {
-        answer,
-        questionId: post?._id,
-        parentAnswerId: null,
-        user,
-      };
-      try {
-        const res = await api.post("/api/answers", body);
-        alert("Answer added successfully");
-
-        setPost((prev) => ({
-          ...prev,
-          allAnswers: [...prev.allAnswers, res.data],
-        }));
-
-        setIsModalOpen(false);
-        setAnswer("");
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      alert("Answer cannot be empty!");
-    }
-  };
-
-  // ✅ Reply
-  const handleReplySubmit = async (reply, parentId) => {
-    const cleanedReply = reply.replace(/<(.|\n)*?>/g, "").trim();
-    if (!cleanedReply) return alert("Reply cannot be empty!");
-    const body = { answer: reply, questionId: post?._id, parentAnswerId: parentId, user };
+    if (!post?._id || cleanedAnswer === "") return alert("Answer cannot be empty!");
+    const body = {
+      answer,
+      questionId: post._id,
+      parentAnswerId: null,
+      user: {
+        uid: user.uid || user._id,
+        userName: user.userName || user.name,
+        email: user.email,
+        photo: user.photo,
+      },
+    };
     try {
       const res = await api.post("/api/answers", body);
-      alert("Reply added successfully");
-
-      setPost((prev) => ({
-        ...prev,
-        allAnswers: [...prev.allAnswers, res.data],
-      }));
+      setPost((prev) => ({ ...prev, allAnswers: [...prev.allAnswers, res.data] }));
+      setIsModalOpen(false);
+      setAnswer("");
     } catch (e) {
       console.log(e);
+      alert("Failed to add answer");
     }
   };
 
-  // ✅ Delete Answer
+  // ---------------- Reply ----------------
+  const handleReplySubmit = async (replyText, parentId) => {
+    const cleanedReply = replyText.replace(/<(.|\n)*?>/g, "").trim();
+    if (!cleanedReply) return alert("Reply cannot be empty!");
+    const body = {
+      answer: replyText,
+      questionId: post._id,
+      parentAnswerId: parentId,
+      user: {
+        uid: user.uid || user._id,
+        userName: user.userName || user.name,
+        email: user.email,
+        photo: user.photo,
+      },
+    };
+    try {
+      const res = await api.post("/api/answers", body);
+      setPost((prev) => ({ ...prev, allAnswers: [...prev.allAnswers, res.data] }));
+    } catch (e) {
+      console.log(e);
+      alert("Failed to add reply");
+    }
+  };
+
+  // ---------------- Delete Answer ----------------
   const handleDeleteAnswer = async (answerId) => {
     if (!window.confirm("Delete this answer?")) return;
     try {
@@ -246,51 +244,33 @@ function Post({ post: initialPost }) {
     }
   };
 
-  // ✅ Delete Question
+  // ---------------- Delete Question ----------------
   const handleDeleteQuestion = async () => {
     if (!window.confirm("Delete this question?")) return;
     try {
-      await api.delete(`/api/questions/${post?._id}`);
+      await api.delete(`/api/questions/${post._id}`);
       alert("Question deleted successfully");
-      // TODO: navigate away instead of reload
     } catch (e) {
       console.log(e);
       alert("Failed to delete question");
     }
   };
 
-  // ✅ Voting
+  // ---------------- Voting ----------------
   const handleVote = async (id, type, direction) => {
     try {
-      const body = {
-        targetId: id,
-        targetType: type,
-        direction,
-        userId: user?.email,
-      };
-
+      const body = { targetId: id, targetType: type, direction, userId: user?.email };
       const res = await api.post("/api/votes", body);
 
-      // update state locally (no reload)
       if (type === "question") {
         setPost((prev) => {
           let upVotes = prev.upVotes || 0;
           let downVotes = prev.downVotes || 0;
-
-          if (res.data.message === "Vote added") {
-            if (direction === "up") upVotes++;
-            else downVotes++;
-          }
+          if (res.data.message === "Vote added") direction === "up" ? upVotes++ : downVotes++;
           if (res.data.message === "Vote switched") {
-            if (direction === "up") {
-              upVotes++;
-              downVotes = Math.max(0, downVotes - 1);
-            } else {
-              downVotes++;
-              upVotes = Math.max(0, upVotes - 1);
-            }
+            if (direction === "up") { upVotes++; downVotes = Math.max(0, downVotes - 1); }
+            else { downVotes++; upVotes = Math.max(0, upVotes - 1); }
           }
-
           return { ...prev, upVotes, downVotes, userVote: direction };
         });
       } else {
@@ -299,21 +279,11 @@ function Post({ post: initialPost }) {
             if (ans._id !== id) return ans;
             let upVotes = ans.upVotes || 0;
             let downVotes = ans.downVotes || 0;
-
-            if (res.data.message === "Vote added") {
-              if (direction === "up") upVotes++;
-              else downVotes++;
-            }
+            if (res.data.message === "Vote added") direction === "up" ? upVotes++ : downVotes++;
             if (res.data.message === "Vote switched") {
-              if (direction === "up") {
-                upVotes++;
-                downVotes = Math.max(0, downVotes - 1);
-              } else {
-                downVotes++;
-                upVotes = Math.max(0, upVotes - 1);
-              }
+              if (direction === "up") { upVotes++; downVotes = Math.max(0, downVotes - 1); }
+              else { downVotes++; upVotes = Math.max(0, upVotes - 1); }
             }
-
             return { ...ans, upVotes, downVotes, userVote: direction };
           });
           return { ...prev, allAnswers: updatedAnswers };
@@ -327,6 +297,24 @@ function Post({ post: initialPost }) {
 
   return (
     <div className="post">
+      {/* Notifications Icon */}
+      <div className="notification-bell">
+        <NotificationsNoneOutlined
+          onClick={() => setShowNotifPanel(!showNotifPanel)}
+        />
+        {notifications.length > 0 && <span className="notif-count">{notifications.length}</span>}
+      </div>
+
+      {showNotifPanel && (
+        <div className="notif-panel">
+          {notifications.map((notif) => (
+            <div key={notif._id} className={notif.isRead ? "read" : "unread"}>
+              {notif.message}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Question Info */}
       <div className="post__info">
         <div className="post-user">
@@ -423,7 +411,7 @@ function Post({ post: initialPost }) {
       <div className="nested-answers">
         {nestedAnswers.map((ans) => (
           <Answer
-            key={ans._id} // ✅ unique key
+            key={ans._id}
             answer={ans}
             user={user}
             handleDeleteAnswer={handleDeleteAnswer}
