@@ -1,3 +1,4 @@
+// backend/models/Answer.js
 const mongoose = require("mongoose");
 
 const AnswerSchema = new mongoose.Schema({
@@ -6,23 +7,19 @@ const AnswerSchema = new mongoose.Schema({
     ref: "Questions",
     required: true,
   },
+  parentAnswerId: {   // 👈 Add this for replies
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Answers",
+    default: null,
+  },
   answer: { type: String, required: true },
   user: Object,
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  // ✅ votes field
   upVotes: { type: Number, default: 0 },
-downVotes: { type: Number, default: 0 },
-
-  // ✅ replies for nested answers
-  replies: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Answers",
-    },
-  ],
+  downVotes: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model("Answers", AnswerSchema);
