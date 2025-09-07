@@ -4,12 +4,8 @@ import {
   ThumbUpAlt,
   ThumbDownAltOutlined,
   ThumbDownAlt,
-  ChatBubbleOutlined,
-  MoreHorizOutlined,
-  RepeatOneOutlined,
   ShareOutlined,
   DeleteOutline,
-  NotificationsNoneOutlined,
 } from "@material-ui/icons";
 
 import React, { useState, useEffect } from "react";
@@ -47,7 +43,7 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
   const shouldTruncate = answerText.length > MAX_LENGTH;
 
   return (
-    <div style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
+    <div className="answer-card" style={{ marginLeft: answer.parentAnswerId ? "30px" : "0px" }}>
       <div className="answer-header">
         <div className="answer-user">
           <Avatar src={answer?.user?.photo} />
@@ -59,12 +55,18 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
           </div>
         </div>
 
-        <div className="vote-box-inline">
-          <button onClick={() => handleVote(answer._id, "answer", "up")}>
+        <div className="vote-box-inline enhanced-votes">
+          <button
+            className={`vote-btn ${answer.userVote === "up" ? "active-up" : ""}`}
+            onClick={() => handleVote(answer._id, "answer", "up")}
+          >
             {answer.userVote === "up" ? <ThumbUpAlt /> : <ThumbUpAltOutlined />}
           </button>
           <span className="vote-count">{answer.upVotes || 0}</span>
-          <button onClick={() => handleVote(answer._id, "answer", "down")}>
+          <button
+            className={`vote-btn ${answer.userVote === "down" ? "active-down" : ""}`}
+            onClick={() => handleVote(answer._id, "answer", "down")}
+          >
             {answer.userVote === "down" ? <ThumbDownAlt /> : <ThumbDownAltOutlined />}
           </button>
           <span className="vote-count">{answer.downVotes || 0}</span>
@@ -94,7 +96,6 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
             {isExpanded ? "Show Less" : "Read More"}
           </button>
         )}
-
         <button
           type="button"
           className="reply-btn"
@@ -145,14 +146,11 @@ function Post({ post: initialPost }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
   const [post, setPost] = useState(initialPost);
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const user = useSelector(selectUser);
   const Close = <CloseIcon />;
 
   const handleQuill = (value) => setAnswer(value);
 
-  // ---------------- Build nested answers ----------------
   const buildAnswerTree = (answers) => {
     const map = {};
     const roots = [];
@@ -167,19 +165,6 @@ function Post({ post: initialPost }) {
   };
   const nestedAnswers = buildAnswerTree(post?.allAnswers || []);
 
-  // ---------------- Socket.IO Notifications ----------------
-  useEffect(() => {
-    socket.on("connect", () => console.log("✅ Connected to socket", socket.id));
-    socket.on("notification", (data) => {
-      setNotifications((prev) => [data, ...prev]);
-    });
-    return () => {
-      socket.off("connect");
-      socket.off("notification");
-    };
-  }, []);
-
-  // ---------------- Add Answer ----------------
   const handleSubmit = async () => {
     const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
     if (!post?._id || cleanedAnswer === "") return alert("Answer cannot be empty!");
@@ -205,7 +190,6 @@ function Post({ post: initialPost }) {
     }
   };
 
-  // ---------------- Reply ----------------
   const handleReplySubmit = async (replyText, parentId) => {
     const cleanedReply = replyText.replace(/<(.|\n)*?>/g, "").trim();
     if (!cleanedReply) return alert("Reply cannot be empty!");
@@ -229,7 +213,6 @@ function Post({ post: initialPost }) {
     }
   };
 
-  // ---------------- Delete Answer ----------------
   const handleDeleteAnswer = async (answerId) => {
     if (!window.confirm("Delete this answer?")) return;
     try {
@@ -244,7 +227,6 @@ function Post({ post: initialPost }) {
     }
   };
 
-  // ---------------- Delete Question ----------------
   const handleDeleteQuestion = async () => {
     if (!window.confirm("Delete this question?")) return;
     try {
@@ -256,7 +238,6 @@ function Post({ post: initialPost }) {
     }
   };
 
-  // ---------------- Voting ----------------
   const handleVote = async (id, type, direction) => {
     try {
       const body = { targetId: id, targetType: type, direction, userId: user?.email };
@@ -297,24 +278,6 @@ function Post({ post: initialPost }) {
 
   return (
     <div className="post">
-      {/* Notifications Icon */}
-      <div className="notification-bell">
-        <NotificationsNoneOutlined
-          onClick={() => setShowNotifPanel(!showNotifPanel)}
-        />
-        {notifications.length > 0 && <span className="notif-count">{notifications.length}</span>}
-      </div>
-
-      {showNotifPanel && (
-        <div className="notif-panel">
-          {notifications.map((notif) => (
-            <div key={notif._id} className={notif.isRead ? "read" : "unread"}>
-              {notif.message}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Question Info */}
       <div className="post__info">
         <div className="post-user">
@@ -325,23 +288,25 @@ function Post({ post: initialPost }) {
           </small>
         </div>
 
-        <div className="vote-box-inline">
-          <button onClick={() => handleVote(post._id, "question", "up")}>
+        {/* Voting */}
+        <div className="vote-box-inline enhanced-votes">
+          <button
+            className={`vote-btn ${post.userVote === "up" ? "active-up" : ""}`}
+            onClick={() => handleVote(post._id, "question", "up")}
+          >
             {post.userVote === "up" ? <ThumbUpAlt /> : <ThumbUpAltOutlined />}
           </button>
           <span className="vote-count">{post.upVotes || 0}</span>
-          <button onClick={() => handleVote(post._id, "question", "down")}>
+          <button
+            className={`vote-btn ${post.userVote === "down" ? "active-down" : ""}`}
+            onClick={() => handleVote(post._id, "question", "down")}
+          >
             {post.userVote === "down" ? <ThumbDownAlt /> : <ThumbDownAltOutlined />}
           </button>
           <span className="vote-count">{post.downVotes || 0}</span>
-        </div>
 
-        {user?.email === post?.user?.email && (
-          <DeleteOutline
-            className="delete-icon"
-            onClick={handleDeleteQuestion}
-          />
-        )}
+          
+        </div>
       </div>
 
       {/* Question Body */}
@@ -357,7 +322,7 @@ function Post({ post: initialPost }) {
           </button>
           <Modal
             open={isModalOpen}
-            closeIcon={Close}
+            closeIcon={<CloseIcon />}
             onClose={() => setIsModalOpen(false)}
             closeOnEsc
             center
@@ -367,9 +332,7 @@ function Post({ post: initialPost }) {
               <h1>{post?.questionName}</h1>
               <p>
                 asked by <span className="name">{post?.user?.userName}</span> on{" "}
-                <span className="name">
-                  {new Date(post?.createdAt).toLocaleString()}
-                </span>
+                <span className="name">{new Date(post?.createdAt).toLocaleString()}</span>
               </p>
             </div>
             <div className="modal__answer">
@@ -396,17 +359,21 @@ function Post({ post: initialPost }) {
         {post.questionUrl && <img src={post.questionUrl} alt="url" />}
       </div>
 
-      {/* Footer */}
+      {/* Footer: Share + Delete */}
       <div className="post__footer">
-        <RepeatOneOutlined />
-        <ChatBubbleOutlined />
         <div className="post__footerLeft">
-          <ShareOutlined className="MuiSvgIcon-root" />
-          <MoreHorizOutlined className="MuiSvgIcon-root" />
+          <ShareOutlined className="share-icon" />
+          {user?.email === post?.user?.email && (
+            <DeleteOutline
+              className="delete-icon"
+              onClick={handleDeleteQuestion}
+            />
+          )}
         </div>
       </div>
-
+      
       {/* Answers */}
+      
       <p className="answers-count">{post?.allAnswers.length} Answer(s)</p>
       <div className="nested-answers">
         {nestedAnswers.map((ans) => (
