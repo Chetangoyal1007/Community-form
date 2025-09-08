@@ -1,4 +1,4 @@
-/* ============================
+ /* ============================
    Post Card (Question Section)
 ============================ */
 .post {
@@ -76,7 +76,7 @@
   margin-top: 12px;
 }
 
-/* Post Footer (actions: vote, share, etc.) */
+/* Post Footer (Share & Delete) */
 .post__footer {
   display: flex;
   align-items: center;
@@ -95,18 +95,51 @@
   color: #007aff;
   transform: scale(1.15);
 }
-.post__footerAction {
-  background: rgba(0, 0, 0, 0.05);
-  padding: 6px 12px;
-  border-radius: 50px;
-  display: flex;
-  gap: 14px;
-  backdrop-filter: blur(6px);
-}
 .post__footerLeft {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* ============================
+   Voting Section (Question & Answer)
+============================ */
+.vote-box-inline,
+.vote-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto; /* push to right */
+}
+
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+  transition: all 0.2s ease;
+}
+
+.vote-btn:hover {
+  color: #007aff;
+  transform: scale(1.15);
+}
+
+.vote-btn.voted-up {
+  color: #00c853; /* green for upvote */
+}
+
+.vote-btn.voted-down {
+  color: #ff3d00; /* red for downvote */
+}
+
+.vote-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  min-width: 18px;
+  text-align: center;
 }
 
 /* ============================
@@ -150,14 +183,17 @@
   font-size: 12px;
   color: #888;
 }
-.delete-icon {
+
+/* Answer / Reply Delete Icon */
+.delete-answer-icon {
   cursor: pointer;
-  color: #ff3b30;
+  color: #777;
   font-size: 16px;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
-.delete-icon:hover {
+.delete-answer-icon:hover {
   transform: scale(1.2);
+  color: #d32f2f;
 }
 
 /* Answer Text */
@@ -168,9 +204,7 @@
   color: #333;
 }
 
-/* ============================
-   Replies Section
-============================ */
+/* Replies Section */
 .nested-answers {
   margin-top: 6px;
   padding-left: 16px;
@@ -203,9 +237,7 @@
   color: #005bb5;
 }
 
-/* ============================
-   Reply Input Box
-============================ */
+/* Reply Input Box */
 .reply-box {
   margin-top: 8px;
   padding: 10px;
@@ -240,9 +272,7 @@
   transform: translateY(-1px);
 }
 
-/* ============================
-   Modal
-============================ */
+/* Modal */
 .modal__question {
   text-align: center;
   margin-top: 20px;
@@ -306,16 +336,182 @@
   padding: 20px;
 }
 
+/* Notification Bell */
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+}
+.notif-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff3b30;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.notif-panel {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 8px;
+  z-index: 100;
+}
+.notif-panel .read {
+  color: #888;
+  font-size: 12px;
+  padding: 6px;
+}
+.notif-panel .unread {
+  color: #000;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px;
+}
+/* ----------------------------
+   Delete Icons (Question & Answer)
+---------------------------- */
+
+/* Question delete icon already hai: delete-icon */
+/* Answer / Reply delete icon ke liye */
+.delete-answer-icon {
+  cursor: pointer;       /* pointer cursor */
+  color: #777;        /* default red */
+  font-size: 16px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.delete-answer-icon:hover {
+  transform: scale(1.2); /* hover zoom effect */
+  color: #007aff;        /* hover color darker red */
+} */
+
+
+
 /* ============================
-   Voting Section (next to name)
+   Post Card (Question Section)
 ============================ */
+.post {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  margin-top: 16px;
+  border-radius: 16px;
+  max-width: 700px;
+  background: #ffffffcc; /* white with transparency */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.post:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* Post Info */
+.post__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.post__info > h4 {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+.post__info > h4:hover {
+  color: #007aff;
+  text-decoration: underline;
+}
+.post__info > small {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Question Body */
+.post__body {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+.post__question {
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+.post__btnAnswer {
+  margin-left: auto;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #007aff, #00d4ff);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.post__btnAnswer:hover {
+  background: linear-gradient(135deg, #005bb5, #007aff);
+  transform: translateY(-2px);
+}
+.post__body > img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+/* Post Footer (Share & Delete) */
+.post__footer {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  gap: 16px;
+  flex-wrap: nowrap;
+  width: 100%;
+  justify-content: flex-start;
+}
+.post__footer svg {
+  color: #777;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.post__footer svg:hover {
+  color: #007aff;
+  transform: scale(1.15);
+}
+.post__footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ============================
+   Voting Section (Question & Answer)
+============================ */
+.vote-box-inline,
 .vote-section {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto; /* pushes voting to the right side */
+  margin-left: auto; /* push to right */
 }
-
 .vote-btn {
   background: none;
   border: none;
@@ -324,20 +520,18 @@
   color: #888;
   transition: all 0.2s ease;
 }
-
 .vote-btn:hover {
   color: #007aff;
   transform: scale(1.15);
 }
-
+.vote-btn.voted-up,
 .vote-btn.active-up {
   color: #00c853; /* green for upvote */
 }
-
+.vote-btn.voted-down,
 .vote-btn.active-down {
   color: #ff3d00; /* red for downvote */
 }
-
 .vote-count {
   font-size: 13px;
   font-weight: bold;
@@ -345,3 +539,262 @@
   min-width: 18px;
   text-align: center;
 }
+
+/* ============================
+   Answer Section
+============================ */
+.answers-count {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  font-weight: bold;
+  margin: 12px 0 6px;
+}
+
+
+/* Answer Card */
+/* 🔹 Make answers flat (no extra box) */
+.answer-card {
+  background: #fff;              /* keep white background */
+  padding: 14px 16px;            /* spacing */
+  border-radius: 12px;           /* rounded corners */
+  margin-top: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); /* subtle shadow */
+  border: 1px solid #eee;        /* light border */
+}
+
+/* Answer Header */
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: px;
+}
+.answer-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+.answer-user-info {
+  margin-left: 8px;
+}
+.answer-time {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Answer / Reply Delete Icon */
+.delete-icon {
+  cursor: pointer;
+  color: #777; 
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+.delete-icon:hover {
+  transform: scale(1.2);
+  color: #007aff;
+}
+
+/* Answer Text */
+.post-answer {
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* Replies Section */
+.nested-answers {
+  margin-top: 6px;
+  padding-left: 16px;
+  border-left: 2px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+/* Buttons (Reply, Read More) */
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+.reply-btn,
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #007aff;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  margin: 0;
+  transition: 0.2s ease;
+}
+.reply-btn:hover,
+.read-more-btn:hover {
+  text-decoration: underline;
+  color: #005bb5;
+}
+
+/* Reply Input Box */
+.reply-box {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.reply-box .ql-container {
+  min-height: auto !important;
+  max-height: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Reply Submit Button */
+.submit-reply {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #007aff, #00d4ff);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.submit-reply:hover {
+  background: linear-gradient(135deg, #00d4ff, #007aff);
+  transform: translateY(-1px);
+}
+
+/* Modal */
+.modal__question {
+  text-align: center;
+  margin-top: 20px;
+}
+.modal__question > h1 {
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+.modal__question > p {
+  color: #666;
+  font-size: 13px;
+}
+.modal__question > p > .name {
+  color: #007aff;
+  font-weight: bold;
+}
+.modal__answer {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ddd;  /* 👈 This gives full box borders */
+}
+
+ .modal__answer .ql-container {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.modal__button {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  gap: 10px;
+}
+.modal__button > .cancle {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 500;
+  background: transparent;
+  color: #666;
+  transition: all 0.2s ease;
+}
+.modal__button > .cancle:hover {
+  color: red;
+  background: rgba(255, 0, 0, 0.1);
+}
+.modal__button > .add {
+  border: none;
+  padding: 12px;
+  flex: 1;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(135deg, #007aff, #00d4ff);
+  color: white;
+  transition: all 0.3s ease;
+}
+.modal__button > .add:hover {
+  background: linear-gradient(135deg, #00d4ff, #007aff);
+  transform: translateY(-2px);
+}
+.react-responsive-modal-modal {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  padding: 20px;
+}
+
+/* Notification Bell */
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+}
+.notif-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff3b30;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.notif-panel {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 8px;
+  z-index: 100;
+}
+.notif-panel .read {
+  color: #888;
+  font-size: 12px;
+  padding: 6px;
+}
+.notif-panel .unread {
+  color: #000;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px;
+}
+
+

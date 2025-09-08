@@ -1,5 +1,48 @@
-.feed {
+/* .feed {
     display: flex;
     flex-direction: column;
     flex: 0.6;
-  }
+  } */
+   .feed-container {
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+
+.feed-main {
+  flex: 1;
+}
+
+/* Sidebars */
+.left-sidebar, .right-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 5px;
+}
+
+/* Scroll-to-top arrow */
+.scroll-to-top-arrow {
+  position: fixed;
+  right: 340px;       /* adjust as per posts */
+  bottom: 30px;       /* posts ke right side ke thoda neeche */
+  width: 50px;
+  height: 50px;
+  background-color: rgba(77, 82, 88, 0.85);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  opacity: 0.9;
+  z-index: 1000;
+  transition: transform 0.3s, background-color 0.3s, opacity 0.3s;
+}
+
+.scroll-to-top-arrow:hover {
+  background-color: rgba(0, 123, 255, 1);
+  transform: scale(1.1);
+}
