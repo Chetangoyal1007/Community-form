@@ -1,4 +1,3 @@
-// backend/routes/Answer.js
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -8,7 +7,9 @@ const Notification = require("../models/Notification");
 // Utility: strip HTML for cleaner notifications
 const stripHtml = (html) => html.replace(/<(.|\n)*?>/g, "").trim();
 
-// ✅ POST: Add a new answer or reply
+/**
+ * ✅ POST: Add a new answer or reply
+ */
 router.post("/", async (req, res) => {
   try {
     const { answer, questionId, parentAnswerId, user } = req.body;
@@ -85,8 +86,54 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * ✅ GET: Fetch answers for a question (with pagination)
+ * Example: GET /answers/:questionId?page=1&limit=5
+ */
+router.get("/:questionId", async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
-// ✅ DELETE: Remove an answer or reply
+    // Count total answers for this question
+    const totalAnswers = await answerDB.countDocuments({
+      questionId,
+      parentAnswerId: null, // fetch only top-level answers
+    });
+
+    // Fetch answers with pagination
+    const answers = await answerDB
+      .find({ questionId, parentAnswerId: null })
+      .populate("replies") // populate replies array
+      .sort({ createdAt: -1 }) // newest first
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).send({
+      status: true,
+      message: "Answers fetched successfully",
+      data: answers,
+      pagination: {
+        total: totalAnswers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalAnswers / limit),
+      },
+    });
+  } catch (e) {
+    console.error("❌ Error fetching answers:", e.message, e.stack);
+    res.status(500).send({
+      status: false,
+      message: "Error while fetching answers",
+    });
+  }
+});
+
+/**
+ * ✅ DELETE: Remove an answer or reply
+ */
 router.delete("/:id", async (req, res) => {
   try {
     const answerId = req.params.id;
