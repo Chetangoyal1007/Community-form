@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Mark notification as read
+// ✅ Mark a single notification as read
 router.put("/:id/read", async (req, res) => {
   try {
     const notification = await Notification.findByIdAndUpdate(
@@ -40,6 +40,16 @@ router.put("/:id/read", async (req, res) => {
     res.json(notification);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ✅ Mark all notifications as read
+router.put("/mark-read", async (req, res) => {
+  try {
+    await Notification.updateMany({ isRead: false }, { $set: { isRead: true } });
+    res.json({ success: true, message: "All notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
