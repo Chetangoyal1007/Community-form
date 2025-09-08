@@ -1,14 +1,14 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import HomeIcon from "@material-ui/icons/Home";
 import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined";
 import {
-  AssignmentTurnedInOutlined,
   NotificationsOutlined,
   PeopleAltOutlined,
   Search,
 } from "@material-ui/icons";
 import {
   Avatar,
+  Badge,
   Button,
   Tooltip,
   TextField,
@@ -27,6 +27,15 @@ import { signOut } from "firebase/auth";
 import { logout, selectUser } from "../feature/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+import axios from "axios";
+
+const BACKEND_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:8080"
+    : "https://community-form-backend.onrender.com";
+
+const socket = io(BACKEND_URL, { transports: ["websocket"] });
 
 function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,9 +47,41 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
   const [searchInput, setSearchInput] = useState("");
   const searchTimeout = useRef(null);
 
+  // 🔔 Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifAnchor, setNotifAnchor] = useState(null);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
+
+  // ✅ Fetch & listen to notifications
+  useEffect(() => {
+    axios
+      .get(`${BACKEND_URL}/api/notifications`)
+      .then((res) => {
+        setNotifications(res.data);
+        setNotificationCount(res.data.length);
+      })
+      .catch((err) => console.error("Error fetching notifications:", err));
+
+    socket.on("notification", (data) => {
+      setNotifications((prev) => [data, ...prev]);
+      setNotificationCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socket.off("notification");
+    };
+  }, []);
+
+  // ✅ Open/close notifications dropdown
+  const handleNotifOpen = (e) => {
+    setNotifAnchor(e.currentTarget);
+    setNotificationCount(0); // reset when opened
+  };
+  const handleNotifClose = () => setNotifAnchor(null);
 
   // ✅ Search debounce
   const handleSearchChange = (e) => {
@@ -85,9 +126,7 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
       setCategory("");
       setVisibility("Public");
       setIsModalOpen(false);
-      if (onQuestionAdded) {
-        onQuestionAdded();
-      }
+      if (onQuestionAdded) onQuestionAdded();
     } catch (e) {
       console.error(e);
       alert("Error posting question");
@@ -151,8 +190,6 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
             </div>
           </Tooltip>
 
-          
-
           <Tooltip title="Spaces" arrow>
             <div className="qHeader__icon" onClick={() => navigate("/spaces")}>
               <PeopleAltOutlined />
@@ -160,13 +197,49 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
           </Tooltip>
 
           <Tooltip title="Notifications" arrow>
-            <div
-              className="qHeader__icon"
-              onClick={() => navigate("/notifications")}
-            >
-              <NotificationsOutlined />
+            <div className="qHeader__icon" onClick={handleNotifOpen}>
+              <Badge badgeContent={notificationCount} color="secondary">
+                <NotificationsOutlined style={{ color: "white" }} />
+              </Badge>
             </div>
           </Tooltip>
+
+          {/* Notifications Dropdown */}
+          <Menu
+            anchorEl={notifAnchor}
+            open={Boolean(notifAnchor)}
+            onClose={handleNotifClose}
+            PaperProps={{ style: { maxHeight: 300, width: "350px" } }}
+          >
+            {notifications.length === 0 ? (
+              <MenuItem disabled>No notifications</MenuItem>
+            ) : (
+              <>
+                {notifications.slice(0, 5).map((n, i) => (
+                  <MenuItem key={n._id || i} onClick={handleNotifClose}>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <strong style={{ color: "#007bff" }}>
+                        {n.type?.toUpperCase()}
+                      </strong>
+                      <span>{n.message}</span>
+                      <small style={{ color: "#666" }}>
+                        {new Date(n.timestamp || n.createdAt).toLocaleString()}
+                      </small>
+                    </div>
+                  </MenuItem>
+                ))}
+                <MenuItem
+                  style={{ justifyContent: "center", color: "#007bff" }}
+                  onClick={() => {
+                    handleNotifClose();
+                    navigate("/notifications");
+                  }}
+                >
+                  See all notifications
+                </MenuItem>
+              </>
+            )}
+          </Menu>
         </div>
 
         {/* Search */}
