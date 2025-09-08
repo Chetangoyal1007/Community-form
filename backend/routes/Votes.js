@@ -8,8 +8,8 @@ const Answer = require("../models/Answer");
 
 // 🔒 Rate limiter: Max 2 votes per 10 seconds per user/IP
 const voteLimiter = rateLimit({
-  windowMs: 10 * 1000, // 10 seconds
-  max: 2,
+  windowMs: 1* 1000, // 10 seconds
+  max: 4,
   keyGenerator: (req) => req.body.userId || req.ip,
   message: { message: "Too many votes, please slow down." },
 });

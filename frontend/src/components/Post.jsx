@@ -20,11 +20,8 @@ import api from "../api";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../feature/userSlice";
-import { io } from "socket.io-client";
 
-// ---------------- Socket.IO ----------------
-const socket = io("http://localhost:8080", { transports: ["websocket"] });
-
+// ---------------- LastSeen Component ----------------
 function LastSeen({ date }) {
   if (!date) return null;
   const validDate = new Date(date);
@@ -38,7 +35,7 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
   const [reply, setReply] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const MAX_LENGTH = 200;
+  const MAX_LENGTH = 100;
   const answerText = answer?.answer || "";
   const shouldTruncate = answerText.length > MAX_LENGTH;
 
@@ -146,11 +143,14 @@ function Post({ post: initialPost }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
   const [post, setPost] = useState(initialPost);
+  const [nestedAnswers, setNestedAnswers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const answersPerPage = 5;
   const user = useSelector(selectUser);
-  const Close = <CloseIcon />;
 
   const handleQuill = (value) => setAnswer(value);
 
+  // Build nested answer tree
   const buildAnswerTree = (answers) => {
     const map = {};
     const roots = [];
@@ -163,7 +163,12 @@ function Post({ post: initialPost }) {
     });
     return roots;
   };
-  const nestedAnswers = buildAnswerTree(post?.allAnswers || []);
+
+  useEffect(() => {
+    if (post?.allAnswers) {
+      setNestedAnswers(buildAnswerTree(post.allAnswers));
+    }
+  }, [post?.allAnswers]);
 
   const handleSubmit = async () => {
     const cleanedAnswer = answer.replace(/<(.|\n)*?>/g, "").trim();
@@ -181,7 +186,7 @@ function Post({ post: initialPost }) {
     };
     try {
       const res = await api.post("/api/answers", body);
-      setPost((prev) => ({ ...prev, allAnswers: [...prev.allAnswers, res.data] }));
+      setPost((prev) => ({ ...prev, allAnswers: [...prev.allAnswers, res.data.data] }));
       setIsModalOpen(false);
       setAnswer("");
     } catch (e) {
@@ -206,7 +211,10 @@ function Post({ post: initialPost }) {
     };
     try {
       const res = await api.post("/api/answers", body);
-      setPost((prev) => ({ ...prev, allAnswers: [...prev.allAnswers, res.data] }));
+      setPost((prev) => ({
+        ...prev,
+        allAnswers: [...prev.allAnswers, res.data.data],
+      }));
     } catch (e) {
       console.log(e);
       alert("Failed to add reply");
@@ -249,8 +257,13 @@ function Post({ post: initialPost }) {
           let downVotes = prev.downVotes || 0;
           if (res.data.message === "Vote added") direction === "up" ? upVotes++ : downVotes++;
           if (res.data.message === "Vote switched") {
-            if (direction === "up") { upVotes++; downVotes = Math.max(0, downVotes - 1); }
-            else { downVotes++; upVotes = Math.max(0, upVotes - 1); }
+            if (direction === "up") {
+              upVotes++;
+              downVotes = Math.max(0, downVotes - 1);
+            } else {
+              downVotes++;
+              upVotes = Math.max(0, upVotes - 1);
+            }
           }
           return { ...prev, upVotes, downVotes, userVote: direction };
         });
@@ -262,8 +275,13 @@ function Post({ post: initialPost }) {
             let downVotes = ans.downVotes || 0;
             if (res.data.message === "Vote added") direction === "up" ? upVotes++ : downVotes++;
             if (res.data.message === "Vote switched") {
-              if (direction === "up") { upVotes++; downVotes = Math.max(0, downVotes - 1); }
-              else { downVotes++; upVotes = Math.max(0, upVotes - 1); }
+              if (direction === "up") {
+                upVotes++;
+                downVotes = Math.max(0, downVotes - 1);
+              } else {
+                downVotes++;
+                upVotes = Math.max(0, upVotes - 1);
+              }
             }
             return { ...ans, upVotes, downVotes, userVote: direction };
           });
@@ -274,6 +292,18 @@ function Post({ post: initialPost }) {
       console.log(e);
       alert("Voting failed");
     }
+  };
+
+  // Pagination Logic
+  const totalPages = Math.ceil(nestedAnswers.length / answersPerPage);
+  const currentAnswers = nestedAnswers.slice(
+    (currentPage - 1) * answersPerPage,
+    currentPage * answersPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
   };
 
   return (
@@ -304,8 +334,6 @@ function Post({ post: initialPost }) {
             {post.userVote === "down" ? <ThumbDownAlt /> : <ThumbDownAltOutlined />}
           </button>
           <span className="vote-count">{post.downVotes || 0}</span>
-
-          
         </div>
       </div>
 
@@ -371,12 +399,11 @@ function Post({ post: initialPost }) {
           )}
         </div>
       </div>
-      
+
       {/* Answers */}
-      
       <p className="answers-count">{post?.allAnswers.length} Answer(s)</p>
       <div className="nested-answers">
-        {nestedAnswers.map((ans) => (
+        {currentAnswers.map((ans) => (
           <Answer
             key={ans._id}
             answer={ans}
@@ -387,6 +414,35 @@ function Post({ post: initialPost }) {
           />
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              className={currentPage === i + 1 ? "active-page" : ""}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
