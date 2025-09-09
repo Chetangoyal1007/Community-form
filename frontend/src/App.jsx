@@ -39,10 +39,9 @@ function App() {
       const response = await axios.get(`${API_BASE}/api/questions`, { params });
 
       // reverse so latest posts come first
-      const data = Array.isArray(response.data)
-        ? [...response.data].reverse()
-        : [];
-      setQuestions(data);
+    const data = Array.isArray(response.data?.data) ? [...response.data.data].reverse() : [];
+setQuestions(data);
+
     } catch (err) {
       console.error("Error fetching questions:", err);
       setQuestions([]);
