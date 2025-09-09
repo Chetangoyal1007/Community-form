@@ -73,6 +73,37 @@ router.get("/", async (req, res) => {
     res.status(500).send({ status: false, message: "Error fetching questions" });
   }
 });
+// -----------------------------
+// GET /api/questions/search?query=... → Search questions by name
+// -----------------------------
+router.get("/search", async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(400).send({ status: false, data: [] });
+
+    // Case-insensitive search in questionName
+    const regex = new RegExp(query, "i");
+
+    const questions = await questionDB.aggregate([
+      { $match: { questionName: regex } },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "answers",
+          localField: "_id",
+          foreignField: "questionId",
+          as: "allAnswers",
+        },
+      },
+    ]);
+
+    res.status(200).send({ status: true, data: questions });
+  } catch (err) {
+    console.error("Error searching questions:", err);
+    res.status(500).send({ status: false, data: [] });
+  }
+});
+
 
 // -----------------------------
 // DELETE /api/questions/:id → Delete question + associated answers + notification
