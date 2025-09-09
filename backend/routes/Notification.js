@@ -20,14 +20,21 @@ router.post("/", async (req, res) => {
 });
 
 // ✅ Get all notifications
+// ✅ Get all notifications with unread count
 router.get("/", async (req, res) => {
   try {
     const notifications = await Notification.find().sort({ createdAt: -1 });
-    res.json(notifications);
+    const unreadCount = await Notification.countDocuments({ isRead: false });
+
+    res.json({
+      notifications,
+      unreadCount,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ✅ Mark a single notification as read
 router.put("/:id/read", async (req, res) => {

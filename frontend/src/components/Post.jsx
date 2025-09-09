@@ -139,7 +139,7 @@ function Answer({ answer, user, handleDeleteAnswer, handleReplySubmit, handleVot
 }
 
 // ---------------- Post Component ----------------
-function Post({ post: initialPost }) {
+function Post({ post: initialPost, onDeleteQuestion }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [answer, setAnswer] = useState("");
   const [post, setPost] = useState(initialPost);
@@ -240,6 +240,9 @@ function Post({ post: initialPost }) {
     try {
       await api.delete(`/api/questions/${post._id}`);
       alert("Question deleted successfully");
+
+      // Call parent callback to remove from Feed
+      if (onDeleteQuestion) onDeleteQuestion(post._id);
     } catch (e) {
       console.log(e);
       alert("Failed to delete question");

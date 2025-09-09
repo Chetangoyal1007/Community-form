@@ -1,23 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import HomeIcon from "@material-ui/icons/Home";
 import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined";
-import {
-  NotificationsOutlined,
-  PeopleAltOutlined,
-  Search,
-} from "@material-ui/icons";
-import {
-  Avatar,
-  Badge,
-  Button,
-  Tooltip,
-  TextField,
-  Menu,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-} from "@material-ui/core";
+import { NotificationsOutlined, PeopleAltOutlined, Search } from "@material-ui/icons";
+import { Avatar, Badge, Button, Tooltip, TextField, Menu, MenuItem, Select, FormControl, InputLabel } from "@material-ui/core";
 import "./css/QuoraHeader.css";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
@@ -47,7 +32,6 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
   const [searchInput, setSearchInput] = useState("");
   const searchTimeout = useRef(null);
 
-  // 🔔 Notifications
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifAnchor, setNotifAnchor] = useState(null);
@@ -56,19 +40,28 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
 
-  // ✅ Fetch & listen to notifications
+  // Fetch notifications & listen for live updates
   useEffect(() => {
-    axios
-      .get(`${BACKEND_URL}/api/notifications`)
-      .then((res) => {
-        setNotifications(res.data);
-        setNotificationCount(res.data.length);
-      })
-      .catch((err) => console.error("Error fetching notifications:", err));
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/notifications`);
+        const notifs = Array.isArray(res.data) ? res.data : res.data.notifications || [];
+        setNotifications(notifs);
+        const unread = notifs.filter((n) => !n.isRead).length;
+        setNotificationCount(unread);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+        setNotifications([]);
+        setNotificationCount(0);
+      }
+    };
+    fetchNotifications();
 
     socket.on("notification", (data) => {
-      setNotifications((prev) => [data, ...prev]);
-      setNotificationCount((prev) => prev + 1);
+      if (data) {
+        setNotifications((prev) => [data, ...prev]);
+        setNotificationCount((prev) => prev + 1);
+      }
     });
 
     return () => {
@@ -76,26 +69,29 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
     };
   }, []);
 
-  // ✅ Open/close notifications dropdown
-  const handleNotifOpen = (e) => {
+  // Notifications dropdown
+  const handleNotifOpen = async (e) => {
     setNotifAnchor(e.currentTarget);
-    setNotificationCount(0); // reset when opened
+    try {
+      await axios.put(`${BACKEND_URL}/api/notifications/mark-read`);
+      setNotificationCount(0);
+    } catch (err) {
+      console.error("Error marking notifications as read:", err);
+    }
   };
   const handleNotifClose = () => setNotifAnchor(null);
 
-  // ✅ Search debounce
+  // Search debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (onSearch) {
-      searchTimeout.current = setTimeout(() => {
-        onSearch(value);
-      }, 300);
+      searchTimeout.current = setTimeout(() => onSearch(value), 300);
     }
   };
 
-  // ✅ Submit Question
+  // Submit question
   const handleSubmit = async () => {
     if (question.trim() === "" || category.trim() === "") {
       alert("Please enter a question and select a category.");
@@ -109,8 +105,7 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
       visibility,
       user: {
         uid: user?.uid,
-        userName:
-          user?.displayName || user?.email?.split("@")[0] || "Anonymous",
+        userName: user?.displayName || user?.email?.split("@")[0] || "Anonymous",
         email: user?.email,
         photo: user?.photo,
       },
@@ -133,30 +128,20 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
     }
   };
 
-  // ✅ Avatar menu
+  // Avatar menu
   const [anchorEl, setAnchorEl] = useState(null);
-  const handleAvatarClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
   const handleLogout = () => {
     handleMenuClose();
-    signOut(auth)
-      .then(() => {
-        dispatch(logout());
-      })
-      .catch(() => console.log("Error logging out"));
+    signOut(auth).then(() => dispatch(logout())).catch(() => console.log("Error logging out"));
   };
   const handleSwitchUser = () => {
     handleMenuClose();
-    signOut(auth)
-      .then(() => {
-        dispatch(logout());
-        window.location.reload();
-      })
-      .catch(() => console.log("Error switching user"));
+    signOut(auth).then(() => {
+      dispatch(logout());
+      window.location.reload();
+    }).catch(() => console.log("Error switching user"));
   };
 
   return (
@@ -164,22 +149,13 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
       <div className="qHeader-content">
         {/* Logo */}
         <div className="qHeader__logo">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/1/18/Wikipedia20_animated_Plane.gif"
-            alt="logo"
-          />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Wikipedia20_animated_Plane.gif" alt="logo" />
         </div>
 
         {/* Header Icons */}
         <div className="qHeader__icons">
           <Tooltip title="Home" arrow>
-            <div
-              className="qHeader__icon"
-              onClick={() => {
-                if (onHomeClick) onHomeClick();
-                navigate("/");
-              }}
-            >
+            <div className="qHeader__icon" onClick={() => { if(onHomeClick) onHomeClick(); navigate("/"); }}>
               <HomeIcon />
             </div>
           </Tooltip>
@@ -218,22 +194,15 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
                 {notifications.slice(0, 5).map((n, i) => (
                   <MenuItem key={n._id || i} onClick={handleNotifClose}>
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                      <strong style={{ color: "#007bff" }}>
-                        {n.type?.toUpperCase()}
-                      </strong>
+                      <strong style={{ color: "#007bff" }}>{n.type?.toUpperCase()}</strong>
                       <span>{n.message}</span>
-                      <small style={{ color: "#666" }}>
-                        {new Date(n.timestamp || n.createdAt).toLocaleString()}
-                      </small>
+                      <small style={{ color: "#666" }}>{new Date(n.timestamp || n.createdAt).toLocaleString()}</small>
                     </div>
                   </MenuItem>
                 ))}
                 <MenuItem
                   style={{ justifyContent: "center", color: "#007bff" }}
-                  onClick={() => {
-                    handleNotifClose();
-                    navigate("/notifications");
-                  }}
+                  onClick={() => { handleNotifClose(); navigate("/notifications"); }}
                 >
                   See all notifications
                 </MenuItem>
@@ -245,13 +214,7 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
         {/* Search */}
         <div className="qHeader__input">
           <Search />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchInput}
-            onChange={handleSearchChange}
-            style={{ width: "200px" }}
-          />
+          <input type="text" placeholder="Search" value={searchInput} onChange={handleSearchChange} style={{ width: "200px" }} />
         </div>
 
         {/* Right Section */}
@@ -259,9 +222,7 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
           <Tooltip title={user?.displayName || user?.email || "User"} arrow>
             <span onClick={handleAvatarClick} style={{ cursor: "pointer" }}>
               <Avatar alt={user?.displayName || user?.email || "User"}>
-                {((user?.displayName && user.displayName[0].toUpperCase()) ||
-                  (user?.email && user.email[0].toUpperCase()) ||
-                  "U")}
+                {(user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U")}
               </Avatar>
             </span>
           </Tooltip>
@@ -285,35 +246,14 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
             </div>
             <div className="modal__info">
               <Avatar src={user?.photo} alt={user?.displayName || "User"} />
-              <div className="modal__scope">
-                <p>{visibility}</p>
-              </div>
+              <div className="modal__scope"><p>{visibility}</p></div>
             </div>
             <div className="modal__field">
-              <TextField
-                fullWidth
-                label="Your Question"
-                variant="outlined"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-              />
-
-              {/* ✅ Category Dropdown */}
-              <FormControl
-                fullWidth
-                variant="outlined"
-                style={{ marginTop: "10px" }}
-              >
+              <TextField fullWidth label="Your Question" variant="outlined" value={question} onChange={(e) => setQuestion(e.target.value)} />
+              <FormControl fullWidth variant="outlined" style={{ marginTop: "10px" }}>
                 <InputLabel id="category-label">Category</InputLabel>
-                <Select
-                  labelId="category-label"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  label="Category"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
+                <Select labelId="category-label" value={category} onChange={(e) => setCategory(e.target.value)} label="Category">
+                  <MenuItem value=""><em>None</em></MenuItem>
                   <MenuItem value="History">History</MenuItem>
                   <MenuItem value="Business">Business</MenuItem>
                   <MenuItem value="Psychology">Psychology</MenuItem>
@@ -326,24 +266,10 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
                   <MenuItem value="Education">Education</MenuItem>
                 </Select>
               </FormControl>
-
-              <TextField
-                fullWidth
-                label="Optional URL"
-                variant="outlined"
-                value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
-                style={{ marginTop: "10px" }}
-              />
+              <TextField fullWidth label="Optional URL" variant="outlined" value={inputUrl} onChange={(e) => setInputUrl(e.target.value)} style={{ marginTop: "10px" }} />
             </div>
             <div className="modal__buttons">
-              <Button
-                onClick={handleSubmit}
-                color="primary"
-                variant="contained"
-              >
-                Add
-              </Button>
+              <Button onClick={handleSubmit} color="primary" variant="contained">Add</Button>
               <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
             </div>
           </Modal>
