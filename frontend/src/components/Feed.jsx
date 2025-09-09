@@ -56,10 +56,11 @@ function Feed({ questions }) {
 
       {showScrollArrow && (
         <button className="scroll-to-top-arrow" onClick={scrollToTop}>
-          &uarr;
+          ⬆
         </button>
       )}
     </div>
+    
   );
 }
 
