@@ -191,7 +191,7 @@ function QuoraHeader({ onHomeClick, onSearch, onQuestionAdded }) {
               <MenuItem disabled>No notifications</MenuItem>
             ) : (
               <>
-                {notifications.slice(0, 5).map((n, i) => (
+                {notifications.slice(0, 3).map((n, i) => (
                   <MenuItem key={n._id || i} onClick={handleNotifClose}>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       <strong style={{ color: "#007bff" }}>{n.type?.toUpperCase()}</strong>
