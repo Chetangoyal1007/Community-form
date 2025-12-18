@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const QuestionSchema = new mongoose.Schema({
   questionName: { type: String, required: true },
   questionUrl: String,
-  category: { type: String, required: true }, // ✅ Added category
+  category: { type: String, required: true }, 
   createdAt: {
     type: Date,
     default: Date.now,
@@ -16,7 +16,7 @@ const QuestionSchema = new mongoose.Schema({
   ],
   user: Object,
 
-  // ✅ Store total votes (computed from Vote collection)
+ 
   upVotes: { type: Number, default: 0 },
 downVotes: { type: Number, default: 0 },
 
