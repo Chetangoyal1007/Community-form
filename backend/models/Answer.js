@@ -1,4 +1,4 @@
-// backend/models/Answer.js
+
 const mongoose = require("mongoose");
 
 const AnswerSchema = new mongoose.Schema({
@@ -7,7 +7,7 @@ const AnswerSchema = new mongoose.Schema({
     ref: "Questions",
     required: true,
   },
-  parentAnswerId: {   // 👈 Add this for replies
+  parentAnswerId: {   
     type: mongoose.Schema.Types.ObjectId,
     ref: "Answers",
     default: null,

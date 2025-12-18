@@ -14,7 +14,7 @@ const socket = io(BACKEND_URL, { transports: ["websocket"] });
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [showScrollArrow, setShowScrollArrow] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState(null); // ✅ fix
+  const [hoveredIndex, setHoveredIndex] = useState(null); 
 
   useEffect(() => {
     axios
