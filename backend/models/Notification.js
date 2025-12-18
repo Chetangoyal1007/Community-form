@@ -4,7 +4,7 @@
     {
       type: {
         type: String,
-        enum: ["answer", "reply", "vote", "system","question"], // extendable
+        enum: ["answer", "reply", "vote", "system","question","article"], // extendable
         required: true,
       },
       message: { type: String, required: true },
